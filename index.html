@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>cosy.home — Smart Heating Control</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --cream: #F7F3EE;
+      --warm: #E8DDD0;
+      --clay: #C4A882;
+      --terracotta: #B5714A;
+      --forest: #2D4A3E;
+      --moss: #4A6741;
+      --charcoal: #1C1C1A;
+      --mist: #8A9E95;
+      --white: #FFFFFF;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--cream);
+      color: var(--charcoal);
+      overflow-x: hidden;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.2rem 4rem;
+      background: rgba(247,243,238,0.88);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(196,168,130,0.25);
+    }
+    .nav-logo {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.5rem;
+      color: var(--forest);
+      text-decoration: none;
+    }
+    .nav-logo span { color: var(--terracotta); }
+    .nav-links { display: flex; gap: 2rem; list-style: none; }
+    .nav-links a {
+      font-size: 0.9rem; font-weight: 500; letter-spacing: 0.02em;
+      color: var(--charcoal); text-decoration: none; opacity: 0.7;
+      transition: opacity 0.2s;
+    }
+    .nav-links a:hover { opacity: 1; }
+    .nav-cta {
+      background: var(--forest); color: var(--cream) !important;
+      padding: 0.5rem 1.3rem; border-radius: 100px;
+      opacity: 1 !important; font-weight: 500 !important;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      display: grid; grid-template-columns: 1fr 1fr;
+      align-items: center; gap: 4rem;
+      padding: 8rem 4rem 4rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 80% 60% at 70% 50%, rgba(74,103,65,0.07) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: rgba(45,74,62,0.08); border: 1px solid rgba(45,74,62,0.15);
+      border-radius: 100px; padding: 0.4rem 1rem; margin-bottom: 1.5rem;
+      font-size: 0.8rem; font-weight: 500; color: var(--forest);
+      letter-spacing: 0.04em; text-transform: uppercase;
+    }
+    .hero-badge::before { content: '●'; color: var(--moss); font-size: 0.6rem; }
+    .hero h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(2.8rem, 5vw, 4.5rem);
+      line-height: 1.1;
+      color: var(--charcoal);
+      margin-bottom: 1.5rem;
+    }
+    .hero h1 em { font-style: italic; color: var(--terracotta); }
+    .hero-desc {
+      font-size: 1.1rem; line-height: 1.75;
+      color: var(--charcoal); opacity: 0.65;
+      max-width: 480px; margin-bottom: 2.5rem;
+    }
+    .hero-actions { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
+    .btn-primary {
+      background: var(--forest); color: var(--cream);
+      padding: 0.9rem 2rem; border-radius: 100px;
+      font-size: 0.95rem; font-weight: 500;
+      text-decoration: none; border: none; cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+      display: inline-flex; align-items: center; gap: 0.5rem;
+    }
+    .btn-primary:hover { background: var(--moss); transform: translateY(-1px); }
+    .btn-secondary {
+      color: var(--forest); font-size: 0.95rem; font-weight: 500;
+      text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.9rem 0; transition: gap 0.2s;
+    }
+    .btn-secondary:hover { gap: 0.8rem; }
+
+    /* phone mockup */
+    .hero-visual {
+      display: flex; justify-content: center; align-items: center;
+      position: relative;
+    }
+    .phone-wrap {
+      position: relative;
+      animation: float 5s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-14px); }
+    }
+    .phone {
+      width: 280px; height: 580px;
+      background: var(--charcoal);
+      border-radius: 44px;
+      border: 6px solid #333;
+      box-shadow: 0 40px 80px rgba(28,28,26,0.25), 0 0 0 1px rgba(255,255,255,0.05) inset;
+      overflow: hidden; position: relative;
+    }
+    .phone-screen {
+      width: 100%; height: 100%;
+      background: linear-gradient(160deg, #1a2e28 0%, #0d1f1a 100%);
+      padding: 2rem 1.2rem;
+      display: flex; flex-direction: column; gap: 0.8rem;
+    }
+    .phone-status {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 0.65rem; color: rgba(255,255,255,0.4); font-weight: 500;
+      margin-bottom: 0.3rem;
+    }
+    .phone-greeting { color: rgba(255,255,255,0.5); font-size: 0.7rem; }
+    .phone-temp {
+      font-family: 'DM Serif Display', serif;
+      font-size: 3.5rem; color: #fff; line-height: 1;
+      display: flex; align-items: flex-start;
+    }
+    .phone-temp sup { font-size: 1.2rem; margin-top: 0.5rem; margin-left: 0.1rem; }
+    .phone-subtitle { font-size: 0.7rem; color: rgba(255,255,255,0.4); margin-top: -0.3rem; }
+    .phone-card {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px; padding: 0.9rem;
+    }
+    .phone-card-label { font-size: 0.6rem; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.06em; }
+    .phone-card-val { font-size: 1.1rem; font-weight: 600; color: #fff; margin-top: 0.15rem; }
+    .rooms-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+    .room-chip {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 12px; padding: 0.6rem 0.7rem;
+    }
+    .room-chip .rc-name { font-size: 0.58rem; color: rgba(255,255,255,0.45); text-transform: uppercase; letter-spacing: 0.05em; }
+    .room-chip .rc-val { font-size: 0.9rem; font-weight: 600; color: #E8C97A; margin-top: 0.1rem; }
+    .schedule-bar {
+      background: rgba(74,103,65,0.3); border: 1px solid rgba(74,103,65,0.4);
+      border-radius: 12px; padding: 0.7rem;
+      display: flex; align-items: center; gap: 0.6rem;
+    }
+    .sched-icon { font-size: 1rem; }
+    .sched-text { font-size: 0.62rem; color: rgba(255,255,255,0.6); line-height: 1.4; }
+    .sched-text strong { color: #7EC8A0; display: block; font-size: 0.68rem; }
+    .phone-notch {
+      position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+      width: 90px; height: 24px; background: #111; border-radius: 0 0 18px 18px;
+      z-index: 10;
+    }
+
+    /* decorative blobs */
+    .blob {
+      position: absolute; border-radius: 50%;
+      filter: blur(60px); pointer-events: none; opacity: 0.4;
+    }
+    .blob-1 { width: 300px; height: 300px; background: rgba(74,103,65,0.2); top: 10%; right: -5%; }
+    .blob-2 { width: 200px; height: 200px; background: rgba(181,113,74,0.15); bottom: 20%; right: 15%; }
+
+    /* ── FEATURES ── */
+    .features {
+      padding: 6rem 4rem;
+      background: var(--white);
+    }
+    .section-label {
+      font-size: 0.8rem; font-weight: 600; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--terracotta);
+      margin-bottom: 0.8rem;
+    }
+    .section-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(2rem, 3.5vw, 2.8rem);
+      color: var(--charcoal); line-height: 1.2;
+      margin-bottom: 3.5rem;
+    }
+    .features-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 2rem;
+    }
+    .feature-card {
+      background: var(--cream); border: 1px solid var(--warm);
+      border-radius: 20px; padding: 2rem;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .feature-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(45,74,62,0.1); }
+    .feature-icon {
+      width: 48px; height: 48px;
+      background: linear-gradient(135deg, var(--forest), var(--moss));
+      border-radius: 14px; display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem; margin-bottom: 1.2rem;
+    }
+    .feature-card h3 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.2rem; color: var(--charcoal); margin-bottom: 0.6rem;
+    }
+    .feature-card p { font-size: 0.9rem; line-height: 1.7; color: var(--charcoal); opacity: 0.65; }
+
+    /* ── VIDEO SECTION ── */
+    .video-section {
+      padding: 6rem 4rem;
+      background: var(--forest);
+      position: relative; overflow: hidden;
+    }
+    .video-section::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 60% 80% at 0% 50%, rgba(74,103,65,0.4) 0%, transparent 60%);
+    }
+    .video-inner { position: relative; z-index: 1; max-width: 1000px; margin: 0 auto; text-align: center; }
+    .video-section .section-label { color: var(--clay); }
+    .video-section .section-title { color: var(--cream); margin-bottom: 1rem; }
+    .video-section .section-desc {
+      font-size: 1rem; color: rgba(247,243,238,0.6); line-height: 1.7;
+      max-width: 540px; margin: 0 auto 3rem;
+    }
+    .video-container {
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(247,243,238,0.1);
+      border-radius: 24px; overflow: hidden;
+      aspect-ratio: 16/9;
+      position: relative;
+      box-shadow: 0 40px 100px rgba(0,0,0,0.4);
+    }
+    .video-container iframe, .video-container video {
+      width: 100%; height: 100%; border: none;
+    }
+    /* Placeholder shown when no real video is embedded */
+    .video-placeholder {
+      width: 100%; height: 100%;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 1.2rem;
+      background: linear-gradient(160deg, #0d1f1a 0%, #1a2e28 100%);
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .video-placeholder:hover { background: linear-gradient(160deg, #122920 0%, #223d33 100%); }
+    .play-btn {
+      width: 72px; height: 72px;
+      background: rgba(247,243,238,0.1);
+      border: 2px solid rgba(247,243,238,0.25);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s, transform 0.2s;
+    }
+    .video-placeholder:hover .play-btn { background: var(--terracotta); transform: scale(1.08); }
+    .play-btn svg { margin-left: 4px; }
+    .video-placeholder p { color: rgba(247,243,238,0.5); font-size: 0.9rem; letter-spacing: 0.04em; }
+    .video-placeholder .vid-title { color: var(--cream); font-family: 'DM Serif Display', serif; font-size: 1.3rem; }
+
+    /* ── HOW TO ── */
+    .howto {
+      padding: 6rem 4rem;
+      background: var(--cream);
+    }
+    .steps {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 0; position: relative;
+    }
+    .steps::before {
+      content: '';
+      position: absolute; top: 28px; left: calc(10% + 28px); right: calc(10% + 28px);
+      height: 1px; background: var(--warm);
+    }
+    .step { text-align: center; padding: 0 2rem; position: relative; }
+    .step-num {
+      width: 56px; height: 56px;
+      background: var(--white); border: 2px solid var(--warm);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'DM Serif Display', serif; font-size: 1.3rem; color: var(--forest);
+      margin: 0 auto 1.5rem; position: relative; z-index: 1;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .step:hover .step-num { background: var(--forest); color: var(--cream); border-color: var(--forest); }
+    .step h3 { font-family: 'DM Serif Display', serif; font-size: 1.1rem; color: var(--charcoal); margin-bottom: 0.5rem; }
+    .step p { font-size: 0.88rem; line-height: 1.65; color: var(--charcoal); opacity: 0.6; }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--charcoal); color: rgba(247,243,238,0.5);
+      padding: 3rem 4rem;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 1rem;
+      font-size: 0.85rem;
+    }
+    footer a { color: var(--clay); text-decoration: none; }
+    footer a:hover { color: var(--cream); }
+    .footer-logo {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.3rem; color: var(--cream);
+    }
+    .footer-logo span { color: var(--terracotta); }
+
+    /* ── ANIMATIONS ── */
+    .fade-up {
+      opacity: 0; transform: translateY(24px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .fade-up.visible { opacity: 1; transform: none; }
+
+    @media (max-width: 768px) {
+      nav { padding: 1rem 1.5rem; }
+      .nav-links { display: none; }
+      .hero { grid-template-columns: 1fr; padding: 6rem 1.5rem 3rem; gap: 3rem; }
+      .hero-visual { order: -1; }
+      .phone { width: 220px; height: 460px; }
+      .phone-temp { font-size: 2.8rem; }
+      .features, .video-section, .howto { padding: 4rem 1.5rem; }
+      footer { padding: 2rem 1.5rem; }
+      .steps::before { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <a class="nav-logo" href="#">cosy<span>.home</span></a>
+    <ul class="nav-links">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#tutorial">Tutorial</a></li>
+      <li><a href="#howto">Get Started</a></li>
+      <li><a href="https://cosy.green" target="_blank" class="nav-cta">cosy.green ↗</a></li>
+    </ul>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-content">
+      <div class="hero-badge">by cosy.green GmbH</div>
+      <h1>Your home,<br><em>perfectly warm.</em></h1>
+      <p class="hero-desc">
+        cosy.home gives residents full control over their heating thermostats — 
+        set schedules, monitor temperatures, and manage every room from one app.
+      </p>
+      <div class="hero-actions">
+        <a href="#tutorial" class="btn-primary">
+          ▶ Watch Tutorial
+        </a>
+        <a href="#features" class="btn-secondary">
+          Explore features →
+        </a>
+      </div>
+    </div>
+
+    <div class="hero-visual">
+      <div class="blob blob-1"></div>
+      <div class="blob blob-2"></div>
+      <div class="phone-wrap">
+        <div class="phone">
+          <div class="phone-notch"></div>
+          <div class="phone-screen">
+            <div class="phone-status">
+              <span>9:41</span>
+              <span>●●● WiFi 🔋</span>
+            </div>
+            <div class="phone-greeting">Good morning, Sophie</div>
+            <div class="phone-temp">21<sup>°C</sup></div>
+            <div class="phone-subtitle">Living Room · Active schedule</div>
+            <div class="phone-card">
+              <div class="phone-card-label">Humidity</div>
+              <div class="phone-card-val">48% 💧</div>
+            </div>
+            <div class="rooms-grid">
+              <div class="room-chip">
+                <div class="rc-name">Bedroom</div>
+                <div class="rc-val">19°C</div>
+              </div>
+              <div class="room-chip">
+                <div class="rc-name">Kitchen</div>
+                <div class="rc-val">20°C</div>
+              </div>
+              <div class="room-chip">
+                <div class="rc-name">Office</div>
+                <div class="rc-val">22°C</div>
+              </div>
+              <div class="room-chip">
+                <div class="rc-name">Bathroom</div>
+                <div class="rc-val">24°C</div>
+              </div>
+            </div>
+            <div class="schedule-bar">
+              <div class="sched-icon">📅</div>
+              <div class="sched-text">
+                <strong>Next: 22°C at 6:00 PM</strong>
+                Evening comfort schedule active
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="features" id="features">
+    <div class="fade-up">
+      <div class="section-label">What you get</div>
+      <div class="section-title">Everything to control<br>your home climate</div>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card fade-up">
+        <div class="feature-icon">🌡️</div>
+        <h3>Live Thermostat Status</h3>
+        <p>See real-time temperature and humidity readings from every thermostat in your home at a glance.</p>
+      </div>
+      <div class="feature-card fade-up">
+        <div class="feature-icon">📅</div>
+        <h3>Smart Schedules</h3>
+        <p>Create heating schedules for the whole apartment or individual rooms. The system pushes your target temperature at exactly the right time.</p>
+      </div>
+      <div class="feature-card fade-up">
+        <div class="feature-icon">🏠</div>
+        <h3>Room-by-Room Control</h3>
+        <p>Different temperatures for every room. Warm up the bedroom before you wake up, cool down the office in the afternoon.</p>
+      </div>
+      <div class="feature-card fade-up">
+        <div class="feature-icon">⛅</div>
+        <h3>Weather Integration</h3>
+        <p>Live weather data displayed alongside your home readings so you can plan your schedules with full context.</p>
+      </div>
+      <div class="feature-card fade-up">
+        <div class="feature-icon">📊</div>
+        <h3>Usage Insights</h3>
+        <p>Track how your heating behaves over time and understand your home's comfort patterns.</p>
+      </div>
+      <div class="feature-card fade-up">
+        <div class="feature-icon">🔒</div>
+        <h3>Resident-First Privacy</h3>
+        <p>Designed for tenants. Your data stays with you, managed through the cosy.green platform your landlord already trusts.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- VIDEO TUTORIAL -->
+  <section class="video-section" id="tutorial">
+    <div class="video-inner">
+      <div class="section-label fade-up">Tutorial</div>
+      <div class="section-title fade-up">See cosy.home in action</div>
+      <p class="section-desc fade-up">
+        Watch this short walkthrough to learn how to set up schedules, 
+        monitor your thermostats, and get the most out of your app.
+      </p>
+      <div class="video-container fade-up">
+        <!--
+          ╔══════════════════════════════════════════════════════════════╗
+          ║  REPLACE THIS BLOCK WITH YOUR ACTUAL VIDEO                  ║
+          ║                                                              ║
+          ║  Option A – YouTube embed:                                   ║
+          ║  <iframe                                                     ║
+          ║    src="https://www.youtube.com/embed/YOUR_VIDEO_ID"         ║
+          ║    allow="autoplay; fullscreen" allowfullscreen>             ║
+          ║  </iframe>                                                   ║
+          ║                                                              ║
+          ║  Option B – self-hosted video file:                          ║
+          ║  <video controls poster="thumbnail.jpg">                    ║
+          ║    <source src="tutorial.mp4" type="video/mp4">             ║
+          ║  </video>                                                    ║
+          ╚══════════════════════════════════════════════════════════════╝
+        -->
+        <div class="video-placeholder" onclick="this.innerHTML='<p style=\'color:rgba(247,243,238,0.5);font-size:0.9rem\'>Add your YouTube embed or video file here (see HTML comments)</p>'">
+          <div class="play-btn">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
+              <path d="M8 5v14l11-7z"/>
+            </svg>
+          </div>
+          <div class="vid-title">How to use cosy.home</div>
+          <p>Click to preview · Replace with your real tutorial video</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW TO GET STARTED -->
+  <section class="howto" id="howto">
+    <div class="fade-up" style="text-align:center; max-width:600px; margin: 0 auto 4rem;">
+      <div class="section-label">Get started</div>
+      <div class="section-title">Up and running<br>in four steps</div>
+    </div>
+    <div class="steps">
+      <div class="step fade-up">
+        <div class="step-num">1</div>
+        <h3>Check eligibility</h3>
+        <p>The app is available to residents in buildings where the cosy.green system is already installed by your landlord.</p>
+      </div>
+      <div class="step fade-up">
+        <div class="step-num">2</div>
+        <h3>Download the app</h3>
+        <p>Get cosy.home from the App Store or Google Play and sign up with the credentials provided by your building manager.</p>
+      </div>
+      <div class="step fade-up">
+        <div class="step-num">3</div>
+        <h3>Explore your rooms</h3>
+        <p>See all your thermostats, current temperatures, and live humidity data for every room in your apartment.</p>
+      </div>
+      <div class="step fade-up">
+        <div class="step-num">4</div>
+        <h3>Create your first schedule</h3>
+        <p>Set a weekly heating plan for your whole apartment or per room — the system handles the rest automatically.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-logo">cosy<span>.home</span></div>
+    <div>
+      Part of <a href="https://cosy.green" target="_blank">cosy.green GmbH</a> · Smart heating for sustainable living
+    </div>
+    <div>© 2025 cosy.green GmbH</div>
+  </footer>
+
+  <script>
+    // Scroll-triggered fade-in
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((e, i) => {
+        if (e.isIntersecting) {
+          setTimeout(() => e.target.classList.add('visible'), i * 80);
+          observer.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.12 });
+    document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+  </script>
+</body>
+</html>
