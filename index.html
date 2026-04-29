@@ -108,72 +108,72 @@
 
     /* PHONE SLIDESHOW */
     .hero-right { display: flex; justify-content: center; align-items: center; position: relative; z-index: 2; }
-    .phone-scene { position: relative; animation: floatPhone 6s ease-in-out infinite; }
+    .phone-scene-wrap {
+      position: relative;
+      animation: floatPhone 6s ease-in-out infinite;
+    }
     @keyframes floatPhone { 0%,100%{transform:translateY(0) rotate(-2deg)} 50%{transform:translateY(-16px) rotate(-2deg)} }
-    .phone-glow { position: absolute; inset: -40px; border-radius: 60px; background: radial-gradient(ellipse at 50% 60%, rgba(109,222,122,0.18) 0%, transparent 65%); pointer-events: none; animation: glowPulse 4s ease-in-out infinite; }
+    .phone-glow { position: absolute; inset: -50px; border-radius: 80px; background: radial-gradient(ellipse at 50% 60%, rgba(109,222,122,0.18) 0%, transparent 65%); pointer-events: none; animation: glowPulse 4s ease-in-out infinite; }
     @keyframes glowPulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
 
     /* outer shell */
     .phone-shell {
       width: 270px; height: 568px;
       border-radius: 46px;
-      background: #0a0f0b;
-      border: 2px solid rgba(109,222,122,0.22);
+      background: #111;
+      border: 2px solid rgba(109,222,122,0.3);
       box-shadow:
         0 60px 120px rgba(0,0,0,0.65),
         0 0 0 1px rgba(255,255,255,0.04) inset,
         inset 0 1px 0 rgba(109,222,122,0.12);
       position: relative; overflow: hidden;
+      flex-shrink: 0;
     }
-    /* dynamic island / notch */
+    /* dynamic island */
     .phone-island {
       position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
       width: 88px; height: 26px;
-      background: #000; border-radius: 20px; z-index: 20;
-    }
-    /* side button highlights */
-    .phone-shell::before {
-      content: '';
-      position: absolute; top: 80px; right: -3px;
-      width: 3px; height: 60px; background: rgba(109,222,122,0.15);
-      border-radius: 0 3px 3px 0;
+      background: #000; border-radius: 20px; z-index: 30;
+      pointer-events: none;
     }
 
-    /* slideshow track */
+    /* slideshow track — fills shell */
     .phone-slides {
-      width: 100%; height: 100%;
-      position: relative; overflow: hidden; border-radius: 44px;
+      position: absolute; inset: 0;
+      border-radius: 44px;
+      overflow: hidden;
+      background: #0d1f18;
     }
     .phone-slide {
       position: absolute; inset: 0;
       opacity: 0;
-      transition: opacity 0.8s cubic-bezier(0.4,0,0.2,1);
-      display: flex; align-items: center; justify-content: center;
+      transition: opacity 0.9s ease;
     }
     .phone-slide.active { opacity: 1; z-index: 2; }
     .phone-slide img {
       width: 100%; height: 100%;
-      object-fit: cover; object-position: top center;
-      border-radius: 44px;
+      object-fit: cover;
+      object-position: top center;
+      display: block;
     }
 
-    /* slide dots */
+    /* dots sit BELOW the phone, outside overflow:hidden */
+    .phone-scene { position: relative; display: flex; flex-direction: column; align-items: center; gap: 18px; }
     .slide-dots {
-      position: absolute; bottom: -28px; left: 50%; transform: translateX(-50%);
-      display: flex; gap: 6px; z-index: 10;
+      display: flex; gap: 7px; align-items: center;
     }
     .slide-dot {
-      width: 6px; height: 6px; border-radius: 50%;
+      width: 7px; height: 7px; border-radius: 50%;
       background: rgba(109,222,122,0.25);
       transition: background 0.3s, width 0.3s;
-      cursor: pointer;
+      cursor: pointer; border: none; padding: 0;
     }
-    .slide-dot.active { background: var(--neon); width: 18px; border-radius: 3px; }
+    .slide-dot.active { background: var(--neon); width: 20px; border-radius: 4px; }
 
-    /* floating cards */
-    .float-card { position: absolute; background: rgba(10,20,12,0.88); border: 1px solid rgba(109,222,122,0.22); border-radius: 16px; padding: 0.8rem 1rem; backdrop-filter: blur(20px); box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
-    .fc-1 { right: -90px; top: 18%; animation: floatCard1 5s ease-in-out infinite; }
-    .fc-2 { left: -82px; bottom: 28%; animation: floatCard2 7s ease-in-out infinite; }
+    /* floating cards — anchor to phone-scene */
+    .float-card { position: absolute; background: rgba(10,20,12,0.92); border: 1px solid rgba(109,222,122,0.22); border-radius: 16px; padding: 0.8rem 1rem; backdrop-filter: blur(20px); box-shadow: 0 20px 40px rgba(0,0,0,0.3); z-index: 10; }
+    .fc-1 { right: -96px; top: 18%; animation: floatCard1 5s ease-in-out infinite; }
+    .fc-2 { left: -88px; bottom: 30%; animation: floatCard2 7s ease-in-out infinite; }
     @keyframes floatCard1 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
     @keyframes floatCard2 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(8px)} }
     .fc-label { font-size: 0.6rem; color: rgba(109,222,122,0.6); text-transform: uppercase; letter-spacing: 0.06em; }
@@ -321,6 +321,7 @@
       .hero { grid-template-columns: 1fr; padding: 7rem 1.5rem 4rem; }
       .hero-right { order: -1; }
       .fc-1, .fc-2 { display: none; }
+      .phone-shell { width: 230px; height: 484px; }
       .features, .video-section, .howto, .cta-section, .download-section { padding: 5rem 1.5rem; }
       .features-grid { grid-template-columns: 1fr; }
       .features-header { flex-direction: column; align-items: flex-start; }
@@ -383,28 +384,30 @@
   </div>
 
   <div class="hero-right">
-    <div class="phone-scene">
+    <div class="phone-scene-wrap">
       <div class="phone-glow"></div>
-      <div class="float-card fc-1">
-        <div class="fc-label">Saved this week</div>
-        <div class="fc-val">12%</div>
-        <div class="fc-sub">energy reduction</div>
-      </div>
-      <div class="float-card fc-2">
-        <div class="fc-label">Next schedule</div>
-        <div class="fc-val">6:00 PM</div>
-        <div class="fc-sub">22°C comfort mode</div>
-      </div>
-      <div class="phone-shell">
-        <div class="phone-island"></div>
-        <div class="phone-slides" id="phoneSlides">
-          <div class="phone-slide active"><img src="firstscreen.png" alt="cosy.home login screen"></div>
-          <div class="phone-slide"><img src="scondscreen.png" alt="cosy.home dark login"></div>
-          <div class="phone-slide"><img src="7.png" alt="cosy.home rooms overview"></div>
-          <div class="phone-slide"><img src="4.png" alt="cosy.home schedule wheel"></div>
-          <div class="phone-slide"><img src="5.png" alt="cosy.home device status"></div>
-          <div class="phone-slide"><img src="6.png" alt="cosy.home weather forecast"></div>
-          <div class="phone-slide"><img src="3.png" alt="cosy.home profile"></div>
+      <div class="phone-scene">
+        <div class="float-card fc-1">
+          <div class="fc-label">Saved this week</div>
+          <div class="fc-val">12%</div>
+          <div class="fc-sub">energy reduction</div>
+        </div>
+        <div class="float-card fc-2">
+          <div class="fc-label">Next schedule</div>
+          <div class="fc-val">6:00 PM</div>
+          <div class="fc-sub">22°C comfort mode</div>
+        </div>
+        <div class="phone-shell">
+          <div class="phone-island"></div>
+          <div class="phone-slides" id="phoneSlides">
+            <div class="phone-slide active"><img src="firstscreen.png" alt="Login light"></div>
+            <div class="phone-slide"><img src="scondscreen.png" alt="Login dark"></div>
+            <div class="phone-slide"><img src="7.png" alt="Rooms overview"></div>
+            <div class="phone-slide"><img src="4.png" alt="Schedule wheel"></div>
+            <div class="phone-slide"><img src="5.png" alt="Device status"></div>
+            <div class="phone-slide"><img src="6.png" alt="Weather forecast"></div>
+            <div class="phone-slide"><img src="3.png" alt="Profile"></div>
+          </div>
         </div>
         <div class="slide-dots" id="slideDots">
           <div class="slide-dot active" onclick="goToSlide(0)"></div>
