@@ -106,41 +106,74 @@
     .stat-num { font-family: 'Fraunces', serif; font-size: 2rem; font-weight: 600; color: var(--neon); line-height: 1; }
     .stat-label { font-size: 0.78rem; color: rgba(240,237,230,0.4); margin-top: 0.3rem; text-transform: uppercase; letter-spacing: 0.05em; }
 
-    /* PHONE */
+    /* PHONE SLIDESHOW */
     .hero-right { display: flex; justify-content: center; align-items: center; position: relative; z-index: 2; }
     .phone-scene { position: relative; animation: floatPhone 6s ease-in-out infinite; }
     @keyframes floatPhone { 0%,100%{transform:translateY(0) rotate(-2deg)} 50%{transform:translateY(-16px) rotate(-2deg)} }
-    .phone-glow { position: absolute; inset: -40px; border-radius: 60px; background: radial-gradient(ellipse at 50% 60%, rgba(109,222,122,0.15) 0%, transparent 65%); pointer-events: none; animation: glowPulse 4s ease-in-out infinite; }
+    .phone-glow { position: absolute; inset: -40px; border-radius: 60px; background: radial-gradient(ellipse at 50% 60%, rgba(109,222,122,0.18) 0%, transparent 65%); pointer-events: none; animation: glowPulse 4s ease-in-out infinite; }
     @keyframes glowPulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
-    .phone { width: 270px; height: 560px; background: #0d1a10; border-radius: 46px; border: 1.5px solid rgba(109,222,122,0.18); box-shadow: 0 60px 120px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04) inset; overflow: hidden; position: relative; }
-    .phone-notch { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 80px; height: 22px; background: #080f09; border-radius: 0 0 16px 16px; z-index: 10; }
-    .phone-screen { padding: 2.2rem 1.1rem 1.5rem; height: 100%; display: flex; flex-direction: column; gap: 0.7rem; background: linear-gradient(175deg, #0d2015 0%, #091508 100%); }
-    .ps-bar { display: flex; justify-content: space-between; font-size: 0.6rem; color: rgba(255,255,255,0.3); }
-    .ps-greeting { font-size: 0.72rem; color: rgba(109,222,122,0.6); font-weight: 500; }
-    .ps-temp-row { display: flex; align-items: flex-end; gap: 0.5rem; }
-    .ps-temp { font-family: 'Fraunces', serif; font-size: 4rem; font-weight: 300; color: #fff; line-height: 1; }
-    .ps-temp-unit { font-size: 1.3rem; color: var(--neon); margin-bottom: 0.5rem; }
-    .ps-temp-label { font-size: 0.6rem; color: rgba(255,255,255,0.3); margin-bottom: 0.3rem; }
-    .ps-divider { height: 1px; background: rgba(255,255,255,0.06); margin: 0.1rem 0; }
-    .ps-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
-    .ps-chip { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; padding: 0.65rem 0.7rem; }
-    .ps-chip-label { font-size: 0.55rem; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.06em; }
-    .ps-chip-val { font-size: 1rem; font-weight: 600; color: #fff; margin-top: 0.15rem; }
-    .ps-chip-val.accent { color: #E8C97A; }
-    .ps-chip-val.green { color: var(--neon); }
-    .ps-schedule { background: linear-gradient(135deg, rgba(78,175,80,0.15), rgba(78,175,80,0.05)); border: 1px solid rgba(78,175,80,0.2); border-radius: 14px; padding: 0.7rem 0.8rem; display: flex; align-items: center; gap: 0.6rem; }
-    .ps-sched-icon { font-size: 1.1rem; flex-shrink: 0; }
-    .ps-sched-title { font-size: 0.68rem; font-weight: 600; color: var(--neon); }
-    .ps-sched-sub { font-size: 0.58rem; color: rgba(255,255,255,0.35); margin-top: 0.1rem; }
-    .ps-weather { background: rgba(200,168,75,0.08); border: 1px solid rgba(200,168,75,0.15); border-radius: 14px; padding: 0.65rem 0.8rem; display: flex; align-items: center; justify-content: space-between; }
-    .ps-weather-left { display: flex; align-items: center; gap: 0.5rem; }
-    .ps-weather-icon { font-size: 1.3rem; }
-    .ps-weather-label { font-size: 0.6rem; color: rgba(255,255,255,0.35); }
-    .ps-weather-val { font-size: 0.9rem; font-weight: 600; color: #E8C97A; }
-    .ps-weather-right { font-size: 0.6rem; color: rgba(255,255,255,0.3); text-align: right; }
-    .float-card { position: absolute; background: rgba(14,28,18,0.9); border: 1px solid rgba(109,222,122,0.2); border-radius: 16px; padding: 0.8rem 1rem; backdrop-filter: blur(20px); box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
-    .fc-1 { right: -90px; top: 15%; animation: floatCard1 5s ease-in-out infinite; }
-    .fc-2 { left: -80px; bottom: 25%; animation: floatCard2 7s ease-in-out infinite; }
+
+    /* outer shell */
+    .phone-shell {
+      width: 270px; height: 568px;
+      border-radius: 46px;
+      background: #0a0f0b;
+      border: 2px solid rgba(109,222,122,0.22);
+      box-shadow:
+        0 60px 120px rgba(0,0,0,0.65),
+        0 0 0 1px rgba(255,255,255,0.04) inset,
+        inset 0 1px 0 rgba(109,222,122,0.12);
+      position: relative; overflow: hidden;
+    }
+    /* dynamic island / notch */
+    .phone-island {
+      position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+      width: 88px; height: 26px;
+      background: #000; border-radius: 20px; z-index: 20;
+    }
+    /* side button highlights */
+    .phone-shell::before {
+      content: '';
+      position: absolute; top: 80px; right: -3px;
+      width: 3px; height: 60px; background: rgba(109,222,122,0.15);
+      border-radius: 0 3px 3px 0;
+    }
+
+    /* slideshow track */
+    .phone-slides {
+      width: 100%; height: 100%;
+      position: relative; overflow: hidden; border-radius: 44px;
+    }
+    .phone-slide {
+      position: absolute; inset: 0;
+      opacity: 0;
+      transition: opacity 0.8s cubic-bezier(0.4,0,0.2,1);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .phone-slide.active { opacity: 1; z-index: 2; }
+    .phone-slide img {
+      width: 100%; height: 100%;
+      object-fit: cover; object-position: top center;
+      border-radius: 44px;
+    }
+
+    /* slide dots */
+    .slide-dots {
+      position: absolute; bottom: -28px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 6px; z-index: 10;
+    }
+    .slide-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: rgba(109,222,122,0.25);
+      transition: background 0.3s, width 0.3s;
+      cursor: pointer;
+    }
+    .slide-dot.active { background: var(--neon); width: 18px; border-radius: 3px; }
+
+    /* floating cards */
+    .float-card { position: absolute; background: rgba(10,20,12,0.88); border: 1px solid rgba(109,222,122,0.22); border-radius: 16px; padding: 0.8rem 1rem; backdrop-filter: blur(20px); box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
+    .fc-1 { right: -90px; top: 18%; animation: floatCard1 5s ease-in-out infinite; }
+    .fc-2 { left: -82px; bottom: 28%; animation: floatCard2 7s ease-in-out infinite; }
     @keyframes floatCard1 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
     @keyframes floatCard2 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(8px)} }
     .fc-label { font-size: 0.6rem; color: rgba(109,222,122,0.6); text-transform: uppercase; letter-spacing: 0.06em; }
@@ -362,33 +395,25 @@
         <div class="fc-val">6:00 PM</div>
         <div class="fc-sub">22°C comfort mode</div>
       </div>
-      <div class="phone">
-        <div class="phone-notch"></div>
-        <div class="phone-screen">
-          <div class="ps-bar"><span>9:41</span><span>●●● 🔋</span></div>
-          <div class="ps-greeting">Good morning, Anna ☀️</div>
-          <div class="ps-temp-row">
-            <div class="ps-temp">21</div>
-            <div><div class="ps-temp-unit">°C</div><div class="ps-temp-label">Living Room</div></div>
-          </div>
-          <div class="ps-divider"></div>
-          <div class="ps-row">
-            <div class="ps-chip"><div class="ps-chip-label">Humidity</div><div class="ps-chip-val green">48% 💧</div></div>
-            <div class="ps-chip"><div class="ps-chip-label">Bedroom</div><div class="ps-chip-val accent">19°C</div></div>
-            <div class="ps-chip"><div class="ps-chip-label">Office</div><div class="ps-chip-val accent">22°C</div></div>
-            <div class="ps-chip"><div class="ps-chip-label">Bathroom</div><div class="ps-chip-val accent">24°C</div></div>
-          </div>
-          <div class="ps-schedule">
-            <div class="ps-sched-icon">📅</div>
-            <div><div class="ps-sched-title">Next: 22°C at 6:00 PM</div><div class="ps-sched-sub">Evening comfort • auto-active</div></div>
-          </div>
-          <div class="ps-weather">
-            <div class="ps-weather-left">
-              <div class="ps-weather-icon">⛅</div>
-              <div><div class="ps-weather-label">Outside</div><div class="ps-weather-val">8°C</div></div>
-            </div>
-            <div class="ps-weather-right">Partly cloudy<br>Ulm, DE</div>
-          </div>
+      <div class="phone-shell">
+        <div class="phone-island"></div>
+        <div class="phone-slides" id="phoneSlides">
+          <div class="phone-slide active"><img src="firstscreen.png" alt="cosy.home login screen"></div>
+          <div class="phone-slide"><img src="scondscreen.png" alt="cosy.home dark login"></div>
+          <div class="phone-slide"><img src="7.png" alt="cosy.home rooms overview"></div>
+          <div class="phone-slide"><img src="4.png" alt="cosy.home schedule wheel"></div>
+          <div class="phone-slide"><img src="5.png" alt="cosy.home device status"></div>
+          <div class="phone-slide"><img src="6.png" alt="cosy.home weather forecast"></div>
+          <div class="phone-slide"><img src="3.png" alt="cosy.home profile"></div>
+        </div>
+        <div class="slide-dots" id="slideDots">
+          <div class="slide-dot active" onclick="goToSlide(0)"></div>
+          <div class="slide-dot" onclick="goToSlide(1)"></div>
+          <div class="slide-dot" onclick="goToSlide(2)"></div>
+          <div class="slide-dot" onclick="goToSlide(3)"></div>
+          <div class="slide-dot" onclick="goToSlide(4)"></div>
+          <div class="slide-dot" onclick="goToSlide(5)"></div>
+          <div class="slide-dot" onclick="goToSlide(6)"></div>
         </div>
       </div>
     </div>
@@ -426,7 +451,7 @@
     </div>
     <div class="video-frame reveal">
       <iframe
-        src="https://www.youtube.com/embed/gmra6gAarOU?rel=0&modestbranding=1&color=white"
+        src="https://www.youtube.com/embed/8n3M11-DgEk?rel=0&modestbranding=1&color=white"
         title="cosy.home Tutorial"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
         allowfullscreen>
@@ -437,7 +462,7 @@
         <span class="vm-badge">Official Tutorial</span>
         <span class="vm-title">cosy.home — Full App Walkthrough</span>
       </div>
-      <a class="vm-link" href="https://www.youtube.com/watch?v=gmra6gAarOU" target="_blank">Watch on YouTube →</a>
+      <a class="vm-link" href="https://www.youtube.com/watch?v=8n3M11-DgEk" target="_blank">Watch on YouTube →</a>
     </div>
   </div>
 </section>
@@ -531,10 +556,35 @@
 </footer>
 
 <script>
+  // Scroll reveal
   const obs = new IntersectionObserver((entries) => {
     entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); obs.unobserve(e.target); } });
   }, { threshold: 0.1 });
   document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+  // Phone slideshow
+  const slides = document.querySelectorAll('.phone-slide');
+  const dots   = document.querySelectorAll('.slide-dot');
+  let current  = 0;
+  let timer;
+
+  function goToSlide(n) {
+    slides[current].classList.remove('active');
+    dots[current].classList.remove('active');
+    current = (n + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    dots[current].classList.add('active');
+    resetTimer();
+  }
+
+  function nextSlide() { goToSlide(current + 1); }
+
+  function resetTimer() {
+    clearInterval(timer);
+    timer = setInterval(nextSlide, 3200);
+  }
+
+  resetTimer();
 </script>
 </body>
 </html>
