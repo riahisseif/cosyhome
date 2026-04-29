@@ -1,411 +1,598 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>cosy.home — Smart Heating Control</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,600;1,300;1,600&family=Figtree:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --g0: #0a1a0f;
-      --g1: #0f2318;
-      --g2: #163020;
-      --g3: #1e4229;
-      --green: #1e7a3c;
-      --lime: #4caf50;
-      --neon: #6dde7a;
-      --cream: #f0ede6;
-      --warm: #e8e0d0;
-      --gold: #c8a84b;
-      --white: #ffffff;
-      --glass: rgba(255,255,255,0.04);
-      --glass-border: rgba(255,255,255,0.08);
-    }
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scroll-behavior: smooth; }
-    body {
-      font-family: 'Figtree', sans-serif;
-      background: var(--g0);
-      color: var(--cream);
-      overflow-x: hidden;
-    }
-    body::before {
-      content: '';
-      position: fixed; inset: 0; z-index: 0; pointer-events: none;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
-      opacity: 0.5;
-    }
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>cosy.home — Smart Heating Control</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --black:   #060d08;
+  --d1:      #0b1810;
+  --d2:      #0e2016;
+  --d3:      #14291c;
+  --d4:      #1a3424;
+  --green:   #1d6e38;
+  --mid:     #2e9955;
+  --neon:    #5ddb74;
+  --bright:  #8aec9c;
+  --cream:   #edeae2;
+  --muted:   rgba(237,234,226,0.5);
+  --dimmed:  rgba(237,234,226,0.28);
+  --gold:    #d4a843;
+  --glass:   rgba(255,255,255,0.035);
+  --gb:      rgba(255,255,255,0.07);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;font-size:16px}
+body{font-family:'Inter',sans-serif;background:var(--black);color:var(--cream);overflow-x:hidden;-webkit-font-smoothing:antialiased}
 
-    /* NAV */
-    nav {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 200;
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 1.1rem 3.5rem;
-      background: rgba(10,26,15,0.75);
-      backdrop-filter: blur(20px) saturate(1.4);
-      border-bottom: 1px solid var(--glass-border);
-    }
-    .nav-brand { display: flex; align-items: center; gap: 0.7rem; text-decoration: none; }
-    .nav-logo-img { width: 32px; height: 32px; object-fit: contain; }
-    .nav-brand-text { font-family: 'Fraunces', serif; font-size: 1.35rem; font-weight: 600; color: var(--cream); }
-    .nav-brand-text span { color: var(--neon); }
-    .nav-links { display: flex; align-items: center; gap: 2.2rem; list-style: none; }
-    .nav-links a { font-size: 0.88rem; font-weight: 500; color: rgba(240,237,230,0.55); text-decoration: none; letter-spacing: 0.02em; transition: color 0.2s; }
-    .nav-links a:hover { color: var(--cream); }
-    .nav-pill { background: var(--neon) !important; color: var(--g0) !important; padding: 0.45rem 1.15rem; border-radius: 100px; font-weight: 600 !important; }
+/* ── NOISE LAYER ── */
+body::after{content:'';position:fixed;inset:0;z-index:1000;pointer-events:none;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  opacity:.6}
 
-    /* HERO */
-    .hero {
-      min-height: 100vh;
-      display: grid; grid-template-columns: 1fr 1fr;
-      align-items: center; gap: 3rem;
-      padding: 9rem 3.5rem 5rem;
-      position: relative; overflow: hidden;
-    }
-    .aurora { position: absolute; pointer-events: none; border-radius: 50%; filter: blur(90px); }
-    .aurora-1 { width: 600px; height: 600px; background: radial-gradient(circle, rgba(78,175,80,0.18) 0%, transparent 70%); top: -10%; right: -5%; animation: drift1 12s ease-in-out infinite; }
-    .aurora-2 { width: 400px; height: 400px; background: radial-gradient(circle, rgba(109,222,122,0.10) 0%, transparent 70%); bottom: 0; left: 20%; animation: drift2 16s ease-in-out infinite; }
-    .aurora-3 { width: 300px; height: 300px; background: radial-gradient(circle, rgba(200,168,75,0.08) 0%, transparent 70%); top: 30%; left: -5%; animation: drift2 9s ease-in-out infinite reverse; }
-    @keyframes drift1 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(-30px,40px) scale(1.1)} }
-    @keyframes drift2 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(20px,-30px) scale(0.9)} }
-    .hero::after {
-      content: ''; position: absolute; inset: 0; pointer-events: none;
-      background-image: linear-gradient(rgba(109,222,122,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(109,222,122,0.03) 1px, transparent 1px);
-      background-size: 60px 60px;
-      mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%);
-    }
-    .hero-left { position: relative; z-index: 2; }
-    .hero-tag {
-      display: inline-flex; align-items: center; gap: 0.6rem;
-      border: 1px solid rgba(109,222,122,0.25); background: rgba(109,222,122,0.06);
-      border-radius: 100px; padding: 0.4rem 1rem 0.4rem 0.6rem; margin-bottom: 2rem;
-    }
-    .tag-dot { width: 22px; height: 22px; border-radius: 50%; background: var(--g2); border: 1px solid rgba(109,222,122,0.3); display: flex; align-items: center; justify-content: center; }
-    .tag-dot::after { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--neon); box-shadow: 0 0 8px var(--neon); animation: pulse 2s ease-in-out infinite; }
-    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.8)} }
-    .tag-text { font-size: 0.78rem; font-weight: 600; color: var(--neon); letter-spacing: 0.05em; text-transform: uppercase; }
-    .hero h1 { font-family: 'Fraunces', serif; font-size: clamp(3rem, 5.5vw, 5.2rem); font-weight: 300; line-height: 1.05; color: var(--cream); margin-bottom: 1.6rem; letter-spacing: -0.02em; }
-    .hero h1 em { font-style: italic; color: var(--neon); }
-    .hero h1 .block { display: block; }
-    .hero-desc { font-size: 1.05rem; line-height: 1.8; color: rgba(240,237,230,0.55); max-width: 460px; margin-bottom: 2.8rem; font-weight: 300; }
-    .hero-ctas { display: flex; align-items: center; gap: 1.2rem; flex-wrap: wrap; }
-    .cta-primary {
-      display: inline-flex; align-items: center; gap: 0.6rem;
-      background: var(--neon); color: var(--g0);
-      padding: 0.9rem 2rem; border-radius: 100px;
-      font-weight: 700; font-size: 0.95rem; text-decoration: none;
-      transition: transform 0.2s, box-shadow 0.2s;
-      box-shadow: 0 0 30px rgba(109,222,122,0.3);
-    }
-    .cta-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 40px rgba(109,222,122,0.45); }
-    .cta-primary .play-icon { width: 26px; height: 26px; border-radius: 50%; background: rgba(10,26,15,0.25); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-    .cta-ghost { display: inline-flex; align-items: center; gap: 0.5rem; color: rgba(240,237,230,0.6); font-size: 0.95rem; font-weight: 500; text-decoration: none; transition: color 0.2s, gap 0.2s; }
-    .cta-ghost:hover { color: var(--cream); gap: 0.8rem; }
-    .hero-stats { display: flex; gap: 2rem; margin-top: 3.5rem; padding-top: 2.5rem; border-top: 1px solid var(--glass-border); }
-    .stat-num { font-family: 'Fraunces', serif; font-size: 2rem; font-weight: 600; color: var(--neon); line-height: 1; }
-    .stat-label { font-size: 0.78rem; color: rgba(240,237,230,0.4); margin-top: 0.3rem; text-transform: uppercase; letter-spacing: 0.05em; }
+/* ══════════════════════ NAV ══════════════════════ */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:500;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:1rem 3rem;
+  background:rgba(6,13,8,0.6);
+  backdrop-filter:blur(24px) saturate(1.6);
+  border-bottom:1px solid rgba(93,219,116,0.1);
+  transition:background 0.3s;
+}
+.nav-brand{display:flex;align-items:center;gap:.65rem;text-decoration:none}
+.nav-logo{width:30px;height:30px;object-fit:contain}
+.nav-name{font-family:'Instrument Serif',serif;font-size:1.3rem;color:var(--cream);letter-spacing:-.01em}
+.nav-name b{color:var(--neon);font-weight:400}
+.nav-links{display:flex;align-items:center;gap:2rem;list-style:none}
+.nav-links a{font-size:.83rem;font-weight:500;color:var(--muted);text-decoration:none;letter-spacing:.03em;transition:color .2s}
+.nav-links a:hover{color:var(--cream)}
+.nav-cta{
+  background:linear-gradient(135deg,var(--mid),var(--neon));
+  color:var(--black)!important;padding:.5rem 1.3rem;border-radius:100px;
+  font-weight:600!important;font-size:.82rem!important;
+  box-shadow:0 0 20px rgba(93,219,116,0.25);
+  transition:box-shadow .2s,transform .2s;
+}
+.nav-cta:hover{box-shadow:0 0 35px rgba(93,219,116,0.4);transform:translateY(-1px)}
 
-    /* PHONE SLIDESHOW */
-    .hero-right { display: flex; justify-content: center; align-items: center; position: relative; z-index: 2; }
-    .phone-scene-wrap {
-      position: relative;
-      animation: floatPhone 6s ease-in-out infinite;
-    }
-    @keyframes floatPhone { 0%,100%{transform:translateY(0) rotate(-2deg)} 50%{transform:translateY(-16px) rotate(-2deg)} }
-    .phone-glow { position: absolute; inset: -50px; border-radius: 80px; background: radial-gradient(ellipse at 50% 60%, rgba(109,222,122,0.18) 0%, transparent 65%); pointer-events: none; animation: glowPulse 4s ease-in-out infinite; }
-    @keyframes glowPulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+/* ══════════════════════ HERO ══════════════════════ */
+.hero{
+  min-height:100vh;
+  display:grid;grid-template-columns:1fr 1fr;
+  align-items:center;gap:0;
+  padding:7rem 0 4rem;
+  position:relative;overflow:hidden;
+}
+/* mesh gradient bg */
+.hero-bg{
+  position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 70% 60% at 75% 40%, rgba(30,110,56,0.22) 0%, transparent 65%),
+    radial-gradient(ellipse 50% 50% at 20% 70%, rgba(93,219,116,0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 40% at 50% 10%, rgba(212,168,67,0.06) 0%, transparent 60%);
+  animation:meshShift 18s ease-in-out infinite alternate;
+}
+@keyframes meshShift{
+  0%{background:radial-gradient(ellipse 70% 60% at 75% 40%,rgba(30,110,56,.22) 0%,transparent 65%),radial-gradient(ellipse 50% 50% at 20% 70%,rgba(93,219,116,.08) 0%,transparent 60%)}
+  100%{background:radial-gradient(ellipse 70% 60% at 65% 55%,rgba(46,153,85,.18) 0%,transparent 65%),radial-gradient(ellipse 50% 50% at 30% 55%,rgba(93,219,116,.12) 0%,transparent 60%)}
+}
+/* grid lines */
+.hero-grid{
+  position:absolute;inset:0;pointer-events:none;
+  background-image:
+    linear-gradient(rgba(93,219,116,.04) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(93,219,116,.04) 1px,transparent 1px);
+  background-size:64px 64px;
+  mask-image:radial-gradient(ellipse 90% 90% at 50% 50%,black 20%,transparent 90%);
+}
 
-    /* outer shell */
-    .phone-shell {
-      width: 270px; height: 568px;
-      border-radius: 46px;
-      background: #111;
-      border: 2px solid rgba(109,222,122,0.3);
-      box-shadow:
-        0 60px 120px rgba(0,0,0,0.65),
-        0 0 0 1px rgba(255,255,255,0.04) inset,
-        inset 0 1px 0 rgba(109,222,122,0.12);
-      position: relative; overflow: hidden;
-      flex-shrink: 0;
-    }
-    /* dynamic island */
-    .phone-island {
-      position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
-      width: 88px; height: 26px;
-      background: #000; border-radius: 20px; z-index: 30;
-      pointer-events: none;
-    }
+.hero-left{
+  position:relative;z-index:2;
+  padding:0 3rem 0 3.5rem;
+}
+.hero-kicker{
+  display:inline-flex;align-items:center;gap:.55rem;
+  background:rgba(93,219,116,.07);border:1px solid rgba(93,219,116,.2);
+  border-radius:100px;padding:.35rem .9rem .35rem .5rem;margin-bottom:2.2rem;
+}
+.kicker-dot{
+  width:20px;height:20px;border-radius:50%;
+  background:var(--d3);border:1px solid rgba(93,219,116,.35);
+  display:flex;align-items:center;justify-content:center;
+}
+.kicker-dot i{display:block;width:7px;height:7px;border-radius:50%;background:var(--neon);box-shadow:0 0 7px var(--neon);animation:blink 2.4s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.75)}}
+.kicker-text{font-size:.73rem;font-weight:600;color:var(--neon);letter-spacing:.07em;text-transform:uppercase}
 
-    /* slideshow track — fills shell */
-    .phone-slides {
-      position: absolute; inset: 0;
-      border-radius: 44px;
-      overflow: hidden;
-      background: #0d1f18;
-    }
-    .phone-slide {
-      position: absolute; inset: 0;
-      opacity: 0;
-      transition: opacity 0.9s ease;
-    }
-    .phone-slide.active { opacity: 1; z-index: 2; }
-    .phone-slide img {
-      width: 100%; height: 100%;
-      object-fit: cover;
-      object-position: top center;
-      display: block;
-    }
+.hero h1{
+  font-family:'Instrument Serif',serif;
+  font-size:clamp(3.2rem,5.5vw,5.6rem);
+  font-weight:400;line-height:1.02;
+  color:var(--cream);margin-bottom:1.8rem;letter-spacing:-.025em;
+}
+.hero h1 .line{display:block}
+.hero h1 em{font-style:italic;color:var(--neon)}
+.hero h1 .line-2{
+  background:linear-gradient(90deg,var(--cream) 0%,rgba(237,234,226,.7) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
 
-    /* dots sit BELOW the phone, outside overflow:hidden */
-    .phone-scene { position: relative; display: flex; flex-direction: column; align-items: center; gap: 18px; }
-    .slide-dots {
-      display: flex; gap: 7px; align-items: center;
-    }
-    .slide-dot {
-      width: 7px; height: 7px; border-radius: 50%;
-      background: rgba(109,222,122,0.25);
-      transition: background 0.3s, width 0.3s;
-      cursor: pointer; border: none; padding: 0;
-    }
-    .slide-dot.active { background: var(--neon); width: 20px; border-radius: 4px; }
+.hero-p{
+  font-size:1.05rem;line-height:1.85;color:var(--muted);
+  max-width:440px;margin-bottom:2.8rem;font-weight:300;
+}
 
-    /* floating cards — anchor to phone-scene */
-    .float-card { position: absolute; background: rgba(10,20,12,0.92); border: 1px solid rgba(109,222,122,0.22); border-radius: 16px; padding: 0.8rem 1rem; backdrop-filter: blur(20px); box-shadow: 0 20px 40px rgba(0,0,0,0.3); z-index: 10; }
-    .fc-1 { right: -96px; top: 18%; animation: floatCard1 5s ease-in-out infinite; }
-    .fc-2 { left: -88px; bottom: 30%; animation: floatCard2 7s ease-in-out infinite; }
-    @keyframes floatCard1 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
-    @keyframes floatCard2 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(8px)} }
-    .fc-label { font-size: 0.6rem; color: rgba(109,222,122,0.6); text-transform: uppercase; letter-spacing: 0.06em; }
-    .fc-val { font-size: 1.2rem; font-weight: 700; color: #fff; margin-top: 0.1rem; }
-    .fc-sub { font-size: 0.58rem; color: rgba(255,255,255,0.3); margin-top: 0.05rem; }
+.hero-btns{display:flex;align-items:center;gap:1.1rem;flex-wrap:wrap}
+.btn-main{
+  display:inline-flex;align-items:center;gap:.7rem;
+  background:var(--neon);color:var(--black);
+  padding:.9rem 1.9rem;border-radius:14px;
+  font-weight:600;font-size:.92rem;text-decoration:none;
+  box-shadow:0 0 0 1px rgba(93,219,116,.4),0 8px 32px rgba(93,219,116,.3);
+  transition:transform .2s,box-shadow .2s;
+  position:relative;overflow:hidden;
+}
+.btn-main::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,.15),transparent 50%);
+  pointer-events:none;
+}
+.btn-main:hover{transform:translateY(-2px);box-shadow:0 0 0 1px rgba(93,219,116,.6),0 12px 40px rgba(93,219,116,.4)}
+.btn-main svg{flex-shrink:0}
+.btn-ghost{
+  display:inline-flex;align-items:center;gap:.5rem;
+  color:var(--muted);font-size:.92rem;font-weight:500;
+  text-decoration:none;transition:color .2s,gap .2s;
+}
+.btn-ghost:hover{color:var(--cream);gap:.8rem}
 
-    /* SECTION COMMONS */
-    .section-eyebrow { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--neon); margin-bottom: 1rem; }
-    .section-eyebrow::before { content: ''; width: 24px; height: 1px; background: var(--neon); }
-    .section-title { font-family: 'Fraunces', serif; font-size: clamp(2rem, 3.5vw, 3rem); font-weight: 300; color: var(--cream); line-height: 1.15; letter-spacing: -0.02em; }
-    .section-title em { font-style: italic; color: var(--neon); }
+/* stats row */
+.hero-stats{
+  display:flex;gap:2.2rem;
+  margin-top:3rem;padding-top:2.5rem;
+  border-top:1px solid rgba(255,255,255,.07);
+}
+.stat .n{
+  font-family:'Instrument Serif',serif;
+  font-size:2.1rem;color:var(--neon);line-height:1;
+}
+.stat .l{font-size:.72rem;color:var(--dimmed);margin-top:.25rem;text-transform:uppercase;letter-spacing:.06em}
 
-    /* FEATURES */
-    .features { padding: 7rem 3.5rem; position: relative; background: var(--g1); }
-    .features-header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 4rem; gap: 2rem; }
-    .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5px; border: 1.5px solid var(--glass-border); border-radius: 24px; overflow: hidden; }
-    .feat { background: var(--glass); padding: 2.2rem; transition: background 0.3s; position: relative; overflow: hidden; cursor: default; }
-    .feat::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(109,222,122,0.06) 0%, transparent 60%); opacity: 0; transition: opacity 0.3s; }
-    .feat:hover { background: rgba(109,222,122,0.04); }
-    .feat:hover::before { opacity: 1; }
-    .feat-icon { width: 50px; height: 50px; background: linear-gradient(135deg, var(--g3), var(--green)); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; margin-bottom: 1.4rem; border: 1px solid rgba(109,222,122,0.2); }
-    .feat h3 { font-family: 'Fraunces', serif; font-size: 1.15rem; font-weight: 600; color: var(--cream); margin-bottom: 0.6rem; }
-    .feat p { font-size: 0.88rem; line-height: 1.75; color: rgba(240,237,230,0.5); font-weight: 300; }
-    .feat-number { position: absolute; top: 1.5rem; right: 1.8rem; font-family: 'Fraunces', serif; font-size: 3rem; font-weight: 300; color: rgba(109,222,122,0.06); line-height: 1; pointer-events: none; }
+/* ══════════════════════ PHONE AREA ══════════════════════ */
+.hero-right{
+  display:flex;justify-content:center;align-items:center;
+  position:relative;z-index:2;
+  padding:2rem 3.5rem 2rem 1rem;
+}
+.phone-wrap{
+  position:relative;
+  animation:levitate 7s ease-in-out infinite;
+}
+@keyframes levitate{
+  0%,100%{transform:translateY(0) rotate(-1.5deg)}
+  50%{transform:translateY(-18px) rotate(-1.5deg)}
+}
+/* glow halo behind phone */
+.phone-halo{
+  position:absolute;inset:-60px;border-radius:100px;
+  background:radial-gradient(ellipse at 50% 55%,rgba(93,219,116,.2) 0%,transparent 60%);
+  pointer-events:none;
+  animation:haloBreath 4.5s ease-in-out infinite;
+  filter:blur(20px);
+}
+@keyframes haloBreath{0%,100%{opacity:.8;transform:scale(1)}50%{opacity:.4;transform:scale(.9)}}
 
-    /* VIDEO */
-    .video-section { padding: 7rem 3.5rem; background: var(--g0); position: relative; overflow: hidden; }
-    .video-section::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(109,222,122,0.3), transparent); }
-    .video-inner { max-width: 960px; margin: 0 auto; }
-    .video-header { margin-bottom: 3rem; }
-    .video-frame { border-radius: 28px; overflow: hidden; border: 1.5px solid var(--glass-border); box-shadow: 0 0 0 1px rgba(109,222,122,0.08), 0 60px 120px rgba(0,0,0,0.5); aspect-ratio: 16/9; position: relative; background: #000; }
-    .video-frame iframe { width: 100%; height: 100%; border: none; display: block; }
-    .video-meta { display: flex; align-items: center; justify-content: space-between; margin-top: 1.8rem; flex-wrap: wrap; gap: 1rem; }
-    .video-meta-left { display: flex; align-items: center; gap: 0.8rem; }
-    .vm-badge { background: rgba(109,222,122,0.1); border: 1px solid rgba(109,222,122,0.2); border-radius: 100px; padding: 0.3rem 0.8rem; font-size: 0.75rem; font-weight: 600; color: var(--neon); letter-spacing: 0.04em; }
-    .vm-title { font-size: 0.9rem; color: rgba(240,237,230,0.6); }
-    .vm-link { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; color: var(--neon); text-decoration: none; font-weight: 500; transition: gap 0.2s; }
-    .vm-link:hover { gap: 0.7rem; }
+.phone-frame{
+  width:272px;height:572px;
+  border-radius:48px;
+  background:#080f09;
+  border:1.5px solid rgba(93,219,116,.25);
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,.8),
+    0 40px 100px rgba(0,0,0,.7),
+    inset 0 1px 0 rgba(93,219,116,.15),
+    inset 0 -1px 0 rgba(0,0,0,.5);
+  position:relative;overflow:hidden;flex-shrink:0;
+}
+/* screen glare */
+.phone-frame::after{
+  content:'';position:absolute;
+  top:0;left:0;right:0;height:55%;
+  background:linear-gradient(180deg,rgba(255,255,255,.04) 0%,transparent 100%);
+  pointer-events:none;z-index:20;border-radius:48px 48px 0 0;
+}
+.phone-island{
+  position:absolute;top:13px;left:50%;transform:translateX(-50%);
+  width:92px;height:28px;background:#000;border-radius:22px;z-index:40;
+}
+.phone-slides{position:absolute;inset:0;background:#0a1a0e;border-radius:47px;overflow:hidden}
+.phone-slide{position:absolute;inset:0;opacity:0;transition:opacity 1s ease}
+.phone-slide.active{opacity:1;z-index:2}
+.phone-slide img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block}
 
-    /* HOWTO */
-    .howto { padding: 7rem 3.5rem; background: var(--g1); }
-    .howto-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2rem; margin-top: 4rem; position: relative; }
-    .howto-grid::before { content: ''; position: absolute; top: 34px; left: 8%; right: 8%; height: 1px; background: linear-gradient(90deg, transparent, var(--glass-border), var(--glass-border), transparent); }
-    .step { text-align: center; }
-    .step-bubble { width: 68px; height: 68px; border-radius: 50%; background: var(--g2); border: 1.5px solid var(--glass-border); display: flex; align-items: center; justify-content: center; margin: 0 auto 1.6rem; font-family: 'Fraunces', serif; font-size: 1.4rem; font-weight: 600; color: var(--cream); transition: all 0.3s; position: relative; z-index: 1; }
-    .step:hover .step-bubble { background: var(--green); border-color: var(--neon); color: var(--neon); box-shadow: 0 0 30px rgba(109,222,122,0.2); }
-    .step h3 { font-family: 'Fraunces', serif; font-size: 1.05rem; font-weight: 600; color: var(--cream); margin-bottom: 0.6rem; }
-    .step p { font-size: 0.86rem; line-height: 1.7; color: rgba(240,237,230,0.45); font-weight: 300; }
+/* slide indicator dots */
+.slide-dots{
+  display:flex;gap:6px;align-items:center;
+  margin-top:16px;
+}
+.slide-dot{
+  width:7px;height:7px;border-radius:50%;
+  background:rgba(93,219,116,.2);
+  transition:all .35s ease;cursor:pointer;
+}
+.slide-dot.active{background:var(--neon);width:22px;border-radius:4px;box-shadow:0 0 8px var(--neon)}
 
-    /* CTA */
-    .cta-section { padding: 7rem 3.5rem; background: var(--g0); text-align: center; position: relative; overflow: hidden; }
-    .cta-section::before { content: ''; position: absolute; top: 50%; left: 50%; width: 700px; height: 400px; transform: translate(-50%, -50%); background: radial-gradient(ellipse, rgba(109,222,122,0.08) 0%, transparent 65%); pointer-events: none; }
-    .cta-inner { position: relative; z-index: 1; }
-    .cta-section .section-title { margin-bottom: 1.2rem; }
-    .cta-desc { font-size: 1.05rem; color: rgba(240,237,230,0.5); max-width: 440px; margin: 0 auto 2.5rem; line-height: 1.7; font-weight: 300; }
-    .cta-section .cta-primary { font-size: 1rem; padding: 1rem 2.4rem; }
+/* floating chips */
+.chip{
+  position:absolute;
+  background:rgba(8,20,10,.92);
+  border:1px solid rgba(93,219,116,.2);
+  border-radius:16px;padding:.85rem 1.1rem;
+  backdrop-filter:blur(24px);
+  box-shadow:0 16px 48px rgba(0,0,0,.4),0 0 0 1px rgba(255,255,255,.03);
+  z-index:10;min-width:130px;
+}
+.chip-a{right:-105px;top:16%;animation:chipFloat1 5.5s ease-in-out infinite}
+.chip-b{left:-100px;bottom:26%;animation:chipFloat2 7s ease-in-out infinite}
+@keyframes chipFloat1{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+@keyframes chipFloat2{0%,100%{transform:translateY(0)}50%{transform:translateY(9px)}}
+.chip-label{font-size:.58rem;color:rgba(93,219,116,.6);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.15rem}
+.chip-value{font-size:1.25rem;font-weight:700;color:#fff;line-height:1}
+.chip-sub{font-size:.58rem;color:var(--dimmed);margin-top:.15rem}
 
-    /* FOOTER */
-    footer { background: #050e07; border-top: 1px solid var(--glass-border); padding: 2.5rem 3.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
-    .footer-brand { display: flex; align-items: center; gap: 0.6rem; text-decoration: none; }
-    .footer-brand-img { width: 26px; height: 26px; object-fit: contain; }
-    .footer-brand-name { font-family: 'Fraunces', serif; font-size: 1.1rem; color: var(--cream); }
-    .footer-brand-name span { color: var(--neon); }
-    .footer-center { font-size: 0.82rem; color: rgba(240,237,230,0.3); }
-    .footer-center a { color: rgba(109,222,122,0.6); text-decoration: none; }
-    .footer-center a:hover { color: var(--neon); }
-    .footer-right { font-size: 0.8rem; color: rgba(240,237,230,0.25); }
+/* ══════════════════════ SECTION SHARED ══════════════════════ */
+.eyebrow{
+  display:inline-flex;align-items:center;gap:.6rem;
+  font-size:.72rem;font-weight:600;text-transform:uppercase;
+  letter-spacing:.1em;color:var(--neon);margin-bottom:.9rem;
+}
+.eyebrow::before{content:'';width:20px;height:1.5px;background:var(--neon);border-radius:2px}
+.sec-title{
+  font-family:'Instrument Serif',serif;
+  font-size:clamp(2rem,3.5vw,3.1rem);
+  font-weight:400;color:var(--cream);
+  line-height:1.12;letter-spacing:-.02em;
+}
+.sec-title em{font-style:italic;color:var(--neon)}
 
-    /* ANIMATIONS */
-    .reveal { opacity: 0; transform: translateY(30px); transition: opacity 0.7s ease, transform 0.7s ease; }
-    .reveal.in { opacity: 1; transform: none; }
-    .reveal-delay-1 { transition-delay: 0.1s; }
-    .reveal-delay-2 { transition-delay: 0.2s; }
-    .reveal-delay-3 { transition-delay: 0.3s; }
-    .reveal-delay-4 { transition-delay: 0.4s; }
+/* ══════════════════════ MARQUEE STRIP ══════════════════════ */
+.marquee-strip{
+  background:var(--d2);
+  border-top:1px solid var(--gb);border-bottom:1px solid var(--gb);
+  padding:.85rem 0;overflow:hidden;position:relative;
+}
+.marquee-strip::before,.marquee-strip::after{
+  content:'';position:absolute;top:0;bottom:0;width:120px;z-index:2;pointer-events:none;
+}
+.marquee-strip::before{left:0;background:linear-gradient(90deg,var(--d2),transparent)}
+.marquee-strip::after{right:0;background:linear-gradient(-90deg,var(--d2),transparent)}
+.marquee-track{
+  display:flex;gap:0;
+  animation:marqueeScroll 28s linear infinite;
+  width:max-content;
+}
+@keyframes marqueeScroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.marquee-item{
+  display:flex;align-items:center;gap:.6rem;
+  padding:0 2.5rem;font-size:.82rem;font-weight:500;color:var(--muted);
+  white-space:nowrap;letter-spacing:.02em;
+}
+.marquee-item .dot{width:4px;height:4px;border-radius:50%;background:var(--neon);flex-shrink:0}
 
-    /* DOWNLOAD SECTION */
-    .download-section {
-      padding: 7rem 3.5rem;
-      background: var(--g1);
-      position: relative; overflow: hidden;
-    }
-    .download-section::before {
-      content: '';
-      position: absolute; top: 0; left: 0; right: 0; height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(109,222,122,0.3), transparent);
-    }
-    .download-inner {
-      max-width: 860px; margin: 0 auto; text-align: center;
-    }
-    .download-inner .section-eyebrow { justify-content: center; }
-    .download-inner .section-title { margin-bottom: 1rem; }
-    .download-subtitle {
-      font-size: 1rem; color: rgba(240,237,230,0.5); line-height: 1.75;
-      font-weight: 300; max-width: 480px; margin: 0 auto 3rem;
-    }
-    .store-buttons {
-      display: flex; align-items: center; justify-content: center;
-      gap: 1.2rem; flex-wrap: wrap;
-    }
-    .store-btn {
-      display: inline-flex; align-items: center; gap: 1rem;
-      padding: 0.9rem 1.8rem;
-      border-radius: 16px;
-      text-decoration: none;
-      transition: transform 0.2s, box-shadow 0.2s;
-      min-width: 200px;
-    }
-    .store-btn:hover { transform: translateY(-3px); }
-    .store-btn-apple {
-      background: var(--cream); color: var(--g0);
-      box-shadow: 0 8px 30px rgba(240,237,230,0.15);
-    }
-    .store-btn-apple:hover { box-shadow: 0 12px 40px rgba(240,237,230,0.25); }
-    .store-btn-google {
-      background: var(--g3); color: var(--cream);
-      border: 1.5px solid rgba(109,222,122,0.25);
-      box-shadow: 0 8px 30px rgba(0,0,0,0.3);
-    }
-    .store-btn-google:hover { box-shadow: 0 12px 40px rgba(109,222,122,0.15); border-color: rgba(109,222,122,0.5); }
-    .store-btn-icon { flex-shrink: 0; display: flex; align-items: center; }
-    .store-btn-text { text-align: left; }
-    .store-btn-sub { font-size: 0.68rem; opacity: 0.6; letter-spacing: 0.04em; text-transform: uppercase; display: block; line-height: 1; margin-bottom: 0.2rem; }
-    .store-btn-name { font-family: 'Fraunces', serif; font-size: 1.15rem; font-weight: 600; line-height: 1; display: block; }
-    .store-divider {
-      display: flex; align-items: center; gap: 1rem;
-      color: rgba(240,237,230,0.2); font-size: 0.75rem; letter-spacing: 0.08em;
-      text-transform: uppercase;
-    }
-    .store-divider::before, .store-divider::after {
-      content: ''; flex: 1; height: 1px;
-      background: rgba(240,237,230,0.08);
-    }
-    .store-rating {
-      display: flex; align-items: center; justify-content: center;
-      gap: 2.5rem; margin-top: 2.5rem; flex-wrap: wrap;
-    }
-    .rating-item { text-align: center; }
-    .rating-stars { color: var(--gold); font-size: 0.9rem; letter-spacing: 0.05em; margin-bottom: 0.2rem; }
-    .rating-label { font-size: 0.72rem; color: rgba(240,237,230,0.35); text-transform: uppercase; letter-spacing: 0.06em; }
+/* ══════════════════════ FEATURES ══════════════════════ */
+.features-sec{padding:7rem 3.5rem;background:var(--d1);position:relative;overflow:hidden}
+.features-sec::before{
+  content:'';position:absolute;top:-200px;right:-200px;
+  width:600px;height:600px;border-radius:50%;
+  background:radial-gradient(circle,rgba(93,219,116,.06) 0%,transparent 65%);
+  pointer-events:none;
+}
+.feat-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:4rem;gap:2rem;flex-wrap:wrap}
+.feat-head-sub{max-width:280px;font-size:.88rem;line-height:1.7;color:var(--dimmed);font-weight:300}
 
-    @media (max-width: 900px) {
-      nav { padding: 1rem 1.5rem; }
-      .nav-links { display: none; }
-      .hero { grid-template-columns: 1fr; padding: 7rem 1.5rem 4rem; }
-      .hero-right { order: -1; }
-      .fc-1, .fc-2 { display: none; }
-      .phone-shell { width: 230px; height: 484px; }
-      .features, .video-section, .howto, .cta-section, .download-section { padding: 5rem 1.5rem; }
-      .features-grid { grid-template-columns: 1fr; }
-      .features-header { flex-direction: column; align-items: flex-start; }
-      .howto-grid { grid-template-columns: 1fr 1fr; }
-      .howto-grid::before { display: none; }
-      footer { padding: 2rem 1.5rem; flex-direction: column; text-align: center; }
-      .store-buttons { flex-direction: column; align-items: center; }
-      .store-btn { width: 100%; max-width: 280px; justify-content: center; }
-    }
-  </style>
+.feat-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  border:1px solid var(--gb);border-radius:24px;overflow:hidden;
+  gap:1px;background:var(--gb);
+}
+.feat-card{
+  background:var(--d1);padding:2.2rem 2rem;
+  position:relative;overflow:hidden;cursor:default;
+  transition:background .3s;
+}
+.feat-card::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(93,219,116,.07),transparent 55%);
+  opacity:0;transition:opacity .4s;
+}
+.feat-card:hover{background:rgba(93,219,116,.03)}
+.feat-card:hover::before{opacity:1}
+.feat-n{
+  position:absolute;top:1.2rem;right:1.5rem;
+  font-family:'Instrument Serif',serif;font-size:3.5rem;font-weight:400;
+  color:rgba(93,219,116,.05);line-height:1;pointer-events:none;user-select:none;
+}
+.feat-icon-wrap{
+  width:52px;height:52px;border-radius:16px;margin-bottom:1.5rem;
+  background:linear-gradient(135deg,var(--d4),var(--green));
+  border:1px solid rgba(93,219,116,.18);
+  display:flex;align-items:center;justify-content:center;font-size:1.5rem;
+  box-shadow:0 8px 24px rgba(0,0,0,.3);
+}
+.feat-card h3{
+  font-family:'Instrument Serif',serif;font-size:1.2rem;
+  font-weight:400;color:var(--cream);margin-bottom:.6rem;letter-spacing:-.01em;
+}
+.feat-card p{font-size:.87rem;line-height:1.78;color:var(--muted);font-weight:300}
+
+/* ══════════════════════ VIDEO ══════════════════════ */
+.video-sec{
+  padding:8rem 3.5rem;background:var(--black);
+  position:relative;overflow:hidden;
+}
+.video-sec::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse 60% 50% at 50% 100%,rgba(93,219,116,.07) 0%,transparent 65%);
+}
+.video-inner{max-width:980px;margin:0 auto}
+.video-head{margin-bottom:3rem}
+.video-frame{
+  border-radius:24px;overflow:hidden;
+  border:1px solid var(--gb);
+  box-shadow:0 0 0 1px rgba(93,219,116,.06),0 60px 120px rgba(0,0,0,.6);
+  aspect-ratio:16/9;background:#000;position:relative;
+}
+.video-frame iframe{width:100%;height:100%;border:none;display:block}
+/* animated top border */
+.video-frame::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;z-index:3;
+  background:linear-gradient(90deg,transparent,var(--neon),transparent,var(--mid),transparent);
+  background-size:400% 100%;
+  animation:borderRun 4s linear infinite;
+}
+@keyframes borderRun{0%{background-position:0% 0%}100%{background-position:400% 0%}}
+.video-meta{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-top:1.6rem;flex-wrap:wrap;gap:1rem;
+}
+.vm-left{display:flex;align-items:center;gap:.8rem}
+.vm-pill{
+  background:rgba(93,219,116,.1);border:1px solid rgba(93,219,116,.2);
+  border-radius:100px;padding:.28rem .8rem;
+  font-size:.72rem;font-weight:600;color:var(--neon);letter-spacing:.05em;
+}
+.vm-label{font-size:.88rem;color:var(--muted)}
+.vm-yt{
+  display:inline-flex;align-items:center;gap:.45rem;
+  font-size:.84rem;color:var(--neon);text-decoration:none;font-weight:500;
+  transition:gap .2s;
+}
+.vm-yt:hover{gap:.7rem}
+
+/* ══════════════════════ HOW TO ══════════════════════ */
+.howto-sec{padding:7rem 3.5rem;background:var(--d1);position:relative}
+.howto-sec::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--gb),transparent);
+}
+.steps-wrap{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  gap:1px;background:var(--gb);
+  border:1px solid var(--gb);border-radius:24px;overflow:hidden;
+  margin-top:4rem;
+}
+.step-card{
+  background:var(--d1);padding:2.5rem 1.8rem;
+  position:relative;transition:background .3s;
+}
+.step-card:hover{background:rgba(93,219,116,.03)}
+.step-num{
+  font-family:'Instrument Serif',serif;font-size:3rem;font-weight:400;
+  color:rgba(93,219,116,.12);line-height:1;margin-bottom:1.2rem;
+  transition:color .3s;
+}
+.step-card:hover .step-num{color:rgba(93,219,116,.3)}
+.step-icon{font-size:1.6rem;margin-bottom:1rem}
+.step-card h3{
+  font-family:'Instrument Serif',serif;font-size:1.1rem;
+  color:var(--cream);margin-bottom:.55rem;font-weight:400;
+}
+.step-card p{font-size:.85rem;line-height:1.75;color:var(--muted);font-weight:300}
+.step-tag{
+  display:inline-block;margin-top:1.2rem;
+  font-size:.68rem;font-weight:600;color:var(--neon);
+  letter-spacing:.06em;text-transform:uppercase;
+}
+
+/* ══════════════════════ DOWNLOAD ══════════════════════ */
+.download-sec{
+  padding:8rem 3.5rem;background:var(--black);
+  position:relative;overflow:hidden;
+  text-align:center;
+}
+.dl-bg{
+  position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 55% 45% at 50% 50%,rgba(93,219,116,.08) 0%,transparent 65%);
+}
+/* large decorative ring */
+.dl-ring{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:600px;height:600px;border-radius:50%;
+  border:1px solid rgba(93,219,116,.06);
+  pointer-events:none;
+}
+.dl-ring::before{
+  content:'';position:absolute;inset:60px;border-radius:50%;
+  border:1px solid rgba(93,219,116,.04);
+}
+.dl-ring::after{
+  content:'';position:absolute;inset:130px;border-radius:50%;
+  border:1px solid rgba(93,219,116,.03);
+}
+.dl-inner{position:relative;z-index:1;max-width:700px;margin:0 auto}
+.dl-tagline{
+  font-size:.8rem;font-weight:500;color:var(--dimmed);
+  max-width:420px;margin:1.2rem auto 3.5rem;line-height:1.7;
+}
+.store-row{display:flex;align-items:center;justify-content:center;gap:1rem;flex-wrap:wrap}
+.store-btn{
+  display:inline-flex;align-items:center;gap:.9rem;
+  padding:.9rem 1.7rem;border-radius:16px;
+  text-decoration:none;min-width:196px;
+  transition:transform .2s,box-shadow .2s;
+  position:relative;overflow:hidden;
+}
+.store-btn::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,.06),transparent 55%);
+  pointer-events:none;
+}
+.store-btn:hover{transform:translateY(-3px)}
+.apple-btn{
+  background:var(--cream);color:var(--black);
+  box-shadow:0 8px 32px rgba(237,234,226,.1);
+}
+.apple-btn:hover{box-shadow:0 12px 48px rgba(237,234,226,.2)}
+.google-btn{
+  background:var(--d4);color:var(--cream);
+  border:1px solid rgba(93,219,116,.25);
+  box-shadow:0 8px 32px rgba(0,0,0,.3);
+}
+.google-btn:hover{box-shadow:0 12px 48px rgba(93,219,116,.15);border-color:rgba(93,219,116,.5)}
+.btn-icon{flex-shrink:0;display:flex}
+.btn-copy{text-align:left}
+.btn-copy small{display:block;font-size:.62rem;letter-spacing:.05em;text-transform:uppercase;opacity:.55;margin-bottom:.15rem}
+.btn-copy strong{display:block;font-family:'Instrument Serif',serif;font-size:1.2rem;font-weight:400;letter-spacing:-.01em}
+.or-divider{
+  font-size:.75rem;color:var(--dimmed);letter-spacing:.06em;
+  padding:0 .5rem;
+}
+.dl-trust{
+  display:flex;align-items:center;justify-content:center;gap:2.5rem;
+  margin-top:3rem;flex-wrap:wrap;
+}
+.trust-item{text-align:center}
+.trust-stars{color:var(--gold);font-size:.95rem;letter-spacing:.04em;margin-bottom:.25rem}
+.trust-label{font-size:.68rem;color:var(--dimmed);text-transform:uppercase;letter-spacing:.07em}
+
+/* ══════════════════════ FOOTER ══════════════════════ */
+footer{
+  background:#03080400;border-top:1px solid var(--gb);
+  padding:2.2rem 3rem;
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:1rem;background:var(--d1);
+}
+.foot-brand{display:flex;align-items:center;gap:.6rem;text-decoration:none}
+.foot-logo{width:24px;height:24px;object-fit:contain}
+.foot-name{font-family:'Instrument Serif',serif;font-size:1.1rem;color:var(--cream)}
+.foot-name b{color:var(--neon);font-weight:400}
+.foot-mid{font-size:.8rem;color:var(--dimmed)}
+.foot-mid a{color:rgba(93,219,116,.6);text-decoration:none;transition:color .2s}
+.foot-mid a:hover{color:var(--neon)}
+.foot-copy{font-size:.78rem;color:rgba(237,234,226,.18)}
+
+/* ══════════════════════ REVEAL ══════════════════════ */
+.r{opacity:0;transform:translateY(28px);transition:opacity .75s ease,transform .75s ease}
+.r.in{opacity:1;transform:none}
+.r1{transition-delay:.1s}.r2{transition-delay:.2s}.r3{transition-delay:.3s}.r4{transition-delay:.4s}
+
+/* ══════════════════════ RESPONSIVE ══════════════════════ */
+@media(max-width:960px){
+  nav{padding:.9rem 1.5rem}
+  .nav-links{display:none}
+  .hero{grid-template-columns:1fr;padding:6.5rem 1.5rem 4rem;text-align:center}
+  .hero-right{order:-1;padding:0 1.5rem}
+  .hero-left{padding:0 1rem}
+  .hero-p,.hero-kicker{margin-left:auto;margin-right:auto}
+  .hero-btns{justify-content:center}
+  .hero-stats{justify-content:center}
+  .chip-a,.chip-b{display:none}
+  .features-sec,.video-sec,.howto-sec,.download-sec{padding:5rem 1.5rem}
+  .feat-grid{grid-template-columns:1fr}
+  .feat-head{flex-direction:column;align-items:flex-start}
+  .steps-wrap{grid-template-columns:1fr 1fr}
+  footer{padding:2rem 1.5rem;flex-direction:column;text-align:center}
+  .store-row{flex-direction:column;align-items:center}
+  .store-btn{width:100%;max-width:280px;justify-content:center}
+}
+</style>
 </head>
 <body>
 
+<!-- ═══ NAV ═══ -->
 <nav>
   <a class="nav-brand" href="#">
-    <img class="nav-logo-img" src="icon.png" alt="cosy.green logo">
-    <span class="nav-brand-text">cosy<span>.home</span></span>
+    <img class="nav-logo" src="icon.png" alt="cosy.green">
+    <span class="nav-name">cosy<b>.home</b></span>
   </a>
   <ul class="nav-links">
     <li><a href="#features">Features</a></li>
     <li><a href="#tutorial">Tutorial</a></li>
     <li><a href="#howto">Get Started</a></li>
     <li><a href="#download">Download</a></li>
-    <li><a href="https://cosy.green" target="_blank" class="nav-pill">cosy.green ↗</a></li>
+    <li><a href="https://cosy.green" target="_blank" class="nav-cta">cosy.green ↗</a></li>
   </ul>
 </nav>
 
+<!-- ═══ HERO ═══ -->
 <section class="hero">
-  <div class="aurora aurora-1"></div>
-  <div class="aurora aurora-2"></div>
-  <div class="aurora aurora-3"></div>
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
 
   <div class="hero-left">
-    <div class="hero-tag">
-      <div class="tag-dot"></div>
-      <span class="tag-text">by cosy.green GmbH</span>
+    <div class="hero-kicker">
+      <div class="kicker-dot"><i></i></div>
+      <span class="kicker-text">by cosy.green GmbH</span>
     </div>
     <h1>
-      <span class="block">Smart heating.</span>
-      <span class="block"><em>Total comfort.</em></span>
+      <span class="line">Your home,</span>
+      <span class="line"><em>perfectly warm.</em></span>
     </h1>
-    <p class="hero-desc">
-      cosy.home puts residents in full control of their heating thermostats —
-      monitor every room, build custom schedules, and let the system handle the rest.
+    <p class="hero-p">
+      cosy.home gives residents complete control over their heating — monitor every thermostat, set smart schedules, and stay comfortable from anywhere.
     </p>
-    <div class="hero-ctas">
-      <a href="#tutorial" class="cta-primary">
-        <span class="play-icon">
-          <svg width="10" height="12" viewBox="0 0 10 12" fill="currentColor"><path d="M0 0l10 6-10 6z"/></svg>
-        </span>
+    <div class="hero-btns">
+      <a href="#tutorial" class="btn-main">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M3 2.5l10 5.5-10 5.5z"/></svg>
         Watch Tutorial
       </a>
-      <a href="#features" class="cta-ghost">Explore features →</a>
+      <a href="#features" class="btn-ghost">Explore features →</a>
     </div>
     <div class="hero-stats">
-      <div class="stat-item"><div class="stat-num">100%</div><div class="stat-label">Resident Control</div></div>
-      <div class="stat-item"><div class="stat-num">24/7</div><div class="stat-label">Auto Scheduling</div></div>
-      <div class="stat-item"><div class="stat-num">All</div><div class="stat-label">Rooms at Once</div></div>
+      <div class="stat"><div class="n">100%</div><div class="l">Resident Control</div></div>
+      <div class="stat"><div class="n">24/7</div><div class="l">Auto Schedules</div></div>
+      <div class="stat"><div class="n">All</div><div class="l">Rooms Covered</div></div>
     </div>
   </div>
 
   <div class="hero-right">
-    <div class="phone-scene-wrap">
-      <div class="phone-glow"></div>
-      <div class="phone-scene">
-        <div class="float-card fc-1">
-          <div class="fc-label">Saved this week</div>
-          <div class="fc-val">12%</div>
-          <div class="fc-sub">energy reduction</div>
-        </div>
-        <div class="float-card fc-2">
-          <div class="fc-label">Next schedule</div>
-          <div class="fc-val">6:00 PM</div>
-          <div class="fc-sub">22°C comfort mode</div>
-        </div>
-        <div class="phone-shell">
+    <div class="phone-wrap">
+      <div class="phone-halo"></div>
+      <div class="chip chip-a">
+        <div class="chip-label">Saved this week</div>
+        <div class="chip-value">12%</div>
+        <div class="chip-sub">energy reduction</div>
+      </div>
+      <div class="chip chip-b">
+        <div class="chip-label">Next schedule</div>
+        <div class="chip-value">6:00 PM</div>
+        <div class="chip-sub">22°C comfort mode</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:0">
+        <div class="phone-frame">
           <div class="phone-island"></div>
           <div class="phone-slides" id="phoneSlides">
-            <div class="phone-slide active"><img src="firstscreen.png" alt="Login light"></div>
+            <div class="phone-slide active"><img src="firstscreen.png" alt="Login screen"></div>
             <div class="phone-slide"><img src="scondscreen.png" alt="Login dark"></div>
             <div class="phone-slide"><img src="7.png" alt="Rooms overview"></div>
             <div class="phone-slide"><img src="4.png" alt="Schedule wheel"></div>
             <div class="phone-slide"><img src="5.png" alt="Device status"></div>
-            <div class="phone-slide"><img src="6.png" alt="Weather forecast"></div>
+            <div class="phone-slide"><img src="6.png" alt="Weather"></div>
             <div class="phone-slide"><img src="3.png" alt="Profile"></div>
           </div>
         </div>
@@ -423,36 +610,91 @@
   </div>
 </section>
 
-<section class="features" id="features">
-  <div class="features-header">
-    <div>
-      <div class="section-eyebrow reveal">Everything you need</div>
-      <div class="section-title reveal reveal-delay-1">Built for the way<br><em>residents actually live</em></div>
-    </div>
-    <p style="max-width:300px;font-size:0.9rem;color:rgba(240,237,230,0.45);line-height:1.7;font-weight:300;" class="reveal reveal-delay-2">
-      Every feature is designed to make your home's heating feel effortless — not another thing to manage.
-    </p>
+<!-- ═══ MARQUEE ═══ -->
+<div class="marquee-strip">
+  <div class="marquee-track" id="marquee">
+    <div class="marquee-item"><span class="dot"></span>Live Thermostat Control</div>
+    <div class="marquee-item"><span class="dot"></span>Smart Weekly Schedules</div>
+    <div class="marquee-item"><span class="dot"></span>Room-by-Room Temperature</div>
+    <div class="marquee-item"><span class="dot"></span>Weather Integration</div>
+    <div class="marquee-item"><span class="dot"></span>Humidity Monitoring</div>
+    <div class="marquee-item"><span class="dot"></span>Battery & Valve Status</div>
+    <div class="marquee-item"><span class="dot"></span>Instant Push Updates</div>
+    <div class="marquee-item"><span class="dot"></span>iOS & Android</div>
+    <div class="marquee-item"><span class="dot"></span>Powered by cosy.green</div>
+    <!-- duplicate for seamless loop -->
+    <div class="marquee-item"><span class="dot"></span>Live Thermostat Control</div>
+    <div class="marquee-item"><span class="dot"></span>Smart Weekly Schedules</div>
+    <div class="marquee-item"><span class="dot"></span>Room-by-Room Temperature</div>
+    <div class="marquee-item"><span class="dot"></span>Weather Integration</div>
+    <div class="marquee-item"><span class="dot"></span>Humidity Monitoring</div>
+    <div class="marquee-item"><span class="dot"></span>Battery & Valve Status</div>
+    <div class="marquee-item"><span class="dot"></span>Instant Push Updates</div>
+    <div class="marquee-item"><span class="dot"></span>iOS & Android</div>
+    <div class="marquee-item"><span class="dot"></span>Powered by cosy.green</div>
   </div>
-  <div class="features-grid">
-    <div class="feat reveal"><div class="feat-number">01</div><div class="feat-icon">🌡️</div><h3>Live Thermostat Status</h3><p>Real-time temperature and humidity from every thermostat in your apartment, refreshed continuously.</p></div>
-    <div class="feat reveal reveal-delay-1"><div class="feat-number">02</div><div class="feat-icon">📅</div><h3>Smart Schedules</h3><p>Set heating plans for the whole apartment or per room. The system delivers your target temperature at exactly the right moment.</p></div>
-    <div class="feat reveal reveal-delay-2"><div class="feat-number">03</div><div class="feat-icon">🏠</div><h3>Room-by-Room Control</h3><p>Warm the bedroom before you wake up, cool the office in the afternoon. Each room runs on its own schedule.</p></div>
-    <div class="feat reveal"><div class="feat-number">04</div><div class="feat-icon">⛅</div><h3>Weather Integration</h3><p>Live outdoor weather data alongside your home readings so you can plan schedules with full context.</p></div>
-    <div class="feat reveal reveal-delay-1"><div class="feat-number">05</div><div class="feat-icon">📊</div><h3>Reported Data</h3><p>Track heating behavior, review historical temperature trends, and understand your home's comfort patterns.</p></div>
-    <div class="feat reveal reveal-delay-2"><div class="feat-number">06</div><div class="feat-icon">🔒</div><h3>Resident-First Privacy</h3><p>Designed for tenants. Your data stays within the cosy.green platform your building already trusts.</p></div>
+</div>
+
+<!-- ═══ FEATURES ═══ -->
+<section class="features-sec" id="features">
+  <div class="feat-head">
+    <div>
+      <div class="eyebrow r">What you get</div>
+      <div class="sec-title r r1">Everything to control<br><em>your home climate</em></div>
+    </div>
+    <p class="feat-head-sub r r2">Designed for residents who want comfort without complexity — every feature works right out of the box.</p>
+  </div>
+  <div class="feat-grid">
+    <div class="feat-card r">
+      <div class="feat-n">01</div>
+      <div class="feat-icon-wrap">🌡️</div>
+      <h3>Live Thermostat Status</h3>
+      <p>Real-time temperature and humidity from every thermostat in your apartment, continuously updated.</p>
+    </div>
+    <div class="feat-card r r1">
+      <div class="feat-n">02</div>
+      <div class="feat-icon-wrap">📅</div>
+      <h3>Smart Schedules</h3>
+      <p>Create heating plans apartment-wide or per room. Your target temperature is pushed at exactly the right time.</p>
+    </div>
+    <div class="feat-card r r2">
+      <div class="feat-n">03</div>
+      <div class="feat-icon-wrap">🏠</div>
+      <h3>Room-by-Room Control</h3>
+      <p>Warm the bedroom before sunrise, cool the office in the afternoon — each space runs its own schedule.</p>
+    </div>
+    <div class="feat-card r">
+      <div class="feat-n">04</div>
+      <div class="feat-icon-wrap">⛅</div>
+      <h3>Weather Integration</h3>
+      <p>Live outdoor data displayed alongside your home readings so you can plan smarter schedules.</p>
+    </div>
+    <div class="feat-card r r1">
+      <div class="feat-n">05</div>
+      <div class="feat-icon-wrap">📊</div>
+      <h3>Reported Data</h3>
+      <p>Track battery levels, valve positions, and temperature history — full visibility into your system.</p>
+    </div>
+    <div class="feat-card r r2">
+      <div class="feat-n">06</div>
+      <div class="feat-icon-wrap">🔒</div>
+      <h3>Resident Privacy</h3>
+      <p>Built for tenants. Your data stays within the cosy.green platform your building already trusts.</p>
+    </div>
   </div>
 </section>
 
-<section class="video-section" id="tutorial">
+<!-- ═══ VIDEO ═══ -->
+<section class="video-sec" id="tutorial">
   <div class="video-inner">
-    <div class="video-header">
-      <div class="section-eyebrow reveal">Tutorial</div>
-      <div class="section-title reveal reveal-delay-1">See cosy.home<br><em>in action</em></div>
-      <p style="margin-top:1rem;font-size:1rem;color:rgba(240,237,230,0.5);max-width:480px;line-height:1.75;font-weight:300;" class="reveal reveal-delay-2">
-        Watch this walkthrough to learn how to set up schedules, monitor your thermostats, and get the most from your app.
+    <div class="video-head">
+      <div class="eyebrow r">Tutorial</div>
+      <div class="sec-title r r1">See cosy.home<br><em>in action</em></div>
+      <p style="margin-top:.9rem;font-size:.97rem;color:var(--muted);max-width:460px;line-height:1.8;font-weight:300;" class="r r2">
+        A complete walkthrough — schedules, thermostat control, weather, and everything in between.
       </p>
     </div>
-    <div class="video-frame reveal">
+    <div class="video-frame r">
       <iframe
         src="https://www.youtube.com/embed/8n3M11-DgEk?rel=0&modestbranding=1&color=white"
         title="cosy.home Tutorial"
@@ -460,134 +702,140 @@
         allowfullscreen>
       </iframe>
     </div>
-    <div class="video-meta reveal">
-      <div class="video-meta-left">
-        <span class="vm-badge">Official Tutorial</span>
-        <span class="vm-title">cosy.home — Full App Walkthrough</span>
+    <div class="video-meta r">
+      <div class="vm-left">
+        <span class="vm-pill">Official Tutorial</span>
+        <span class="vm-label">cosy.home — Full Walkthrough</span>
       </div>
-      <a class="vm-link" href="https://www.youtube.com/watch?v=8n3M11-DgEk" target="_blank">Watch on YouTube →</a>
+      <a class="vm-yt" href="https://www.youtube.com/watch?v=8n3M11-DgEk" target="_blank">Watch on YouTube →</a>
     </div>
   </div>
 </section>
 
-<section class="howto" id="howto">
-  <div style="text-align:center;max-width:560px;margin:0 auto;">
-    <div class="section-eyebrow reveal" style="justify-content:center;">Get started</div>
-    <div class="section-title reveal reveal-delay-1">Up and running<br><em>in four steps</em></div>
+<!-- ═══ HOW TO ═══ -->
+<section class="howto-sec" id="howto">
+  <div style="text-align:center;max-width:540px;margin:0 auto">
+    <div class="eyebrow r" style="justify-content:center">Get started</div>
+    <div class="sec-title r r1">Up and running<br><em>in four steps</em></div>
   </div>
-  <div class="howto-grid">
-    <div class="step reveal"><div class="step-bubble">1</div><h3>Check eligibility</h3><p>The app is available to residents in buildings where the cosy.green system is installed by your landlord.</p></div>
-    <div class="step reveal reveal-delay-1"><div class="step-bubble">2</div><h3>Download the app</h3><p>Get cosy.home from the App Store or Google Play and sign in with credentials from your building manager.</p></div>
-    <div class="step reveal reveal-delay-2"><div class="step-bubble">3</div><h3>Explore your rooms</h3><p>See all your thermostats, live temperatures and humidity readings for every room in your apartment.</p></div>
-    <div class="step reveal reveal-delay-3"><div class="step-bubble">4</div><h3>Create a schedule</h3><p>Set a weekly heating plan for your whole apartment or per room — the system handles the rest automatically.</p></div>
+  <div class="steps-wrap">
+    <div class="step-card r">
+      <div class="step-num">01</div>
+      <div class="step-icon">🏢</div>
+      <h3>Check eligibility</h3>
+      <p>Available to residents in buildings where the cosy.green system is already installed by your landlord.</p>
+      <span class="step-tag">Prerequisites</span>
+    </div>
+    <div class="step-card r r1">
+      <div class="step-num">02</div>
+      <div class="step-icon">📲</div>
+      <h3>Download the app</h3>
+      <p>Get cosy.home free from the App Store or Google Play and sign in with credentials from your building manager.</p>
+      <span class="step-tag">iOS & Android</span>
+    </div>
+    <div class="step-card r r2">
+      <div class="step-num">03</div>
+      <div class="step-icon">🌡️</div>
+      <h3>Explore your rooms</h3>
+      <p>See all your thermostats, live temperatures and humidity readings for every room instantly.</p>
+      <span class="step-tag">Live data</span>
+    </div>
+    <div class="step-card r r3">
+      <div class="step-num">04</div>
+      <div class="step-icon">📅</div>
+      <h3>Create a schedule</h3>
+      <p>Set a weekly heating plan for your whole apartment or per room — the system handles the rest.</p>
+      <span class="step-tag">Automation</span>
+    </div>
   </div>
 </section>
 
-<section class="cta-section">
-  <div class="cta-inner">
-    <div class="section-eyebrow reveal" style="justify-content:center;">Ready?</div>
-    <div class="section-title reveal reveal-delay-1">Start controlling<br><em>your comfort today</em></div>
-    <p class="cta-desc reveal reveal-delay-2">Already in a cosy.green building? Download the app and take control of your heating in minutes.</p>
-    <a href="#tutorial" class="cta-primary reveal reveal-delay-3">
-      <span class="play-icon"><svg width="10" height="12" viewBox="0 0 10 12" fill="currentColor"><path d="M0 0l10 6-10 6z"/></svg></span>
-      Watch the Tutorial
-    </a>
-  </div>
-</section>
-
-<section class="download-section" id="download">
-  <div class="download-inner">
-    <div class="section-eyebrow reveal">Download</div>
-    <div class="section-title reveal reveal-delay-1">Get cosy.home<br><em>on your device</em></div>
-    <p class="download-subtitle reveal reveal-delay-2">
-      Available for iPhone and Android. Sign in with credentials from your building manager and start taking control of your heating today.
+<!-- ═══ DOWNLOAD ═══ -->
+<section class="download-sec" id="download">
+  <div class="dl-bg"></div>
+  <div class="dl-ring"></div>
+  <div class="dl-inner">
+    <div class="eyebrow r" style="justify-content:center">Download</div>
+    <div class="sec-title r r1">Get cosy.home<br><em>on your device</em></div>
+    <p class="dl-tagline r r2">
+      Free for iPhone and Android. Sign in with credentials from your building manager and start taking control today.
     </p>
-    <div class="store-buttons reveal reveal-delay-3">
-      <a class="store-btn store-btn-apple" href="https://apps.apple.com/us/app/cosy-home/id6754794050" target="_blank" rel="noopener">
-        <div class="store-btn-icon">
-          <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M21.7 17.1c0-3.1 2.5-4.6 2.6-4.7-1.4-2.1-3.6-2.3-4.4-2.4-1.9-.2-3.6 1.1-4.6 1.1-.9 0-2.4-1.1-4-1-2 0-3.9 1.2-5 3-2.1 3.7-.5 9.2 1.5 12.2 1 1.5 2.2 3.1 3.7 3 1.5-.1 2.1-1 3.9-1 1.8 0 2.3 1 3.9 1 1.6 0 2.7-1.5 3.7-3 1.2-1.7 1.6-3.4 1.7-3.5-.1-.1-3-1.2-3-4.7zM18.6 8.3c.8-1 1.4-2.4 1.2-3.8-1.2.1-2.6.8-3.5 1.8-.8.9-1.5 2.3-1.3 3.7 1.3.1 2.7-.7 3.6-1.7z" fill="#0a1a0f"/>
+    <div class="store-row r r3">
+      <a class="store-btn apple-btn" href="https://apps.apple.com/us/app/cosy-home/id6754794050" target="_blank" rel="noopener">
+        <span class="btn-icon">
+          <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
+            <path d="M20.2 16c0-2.9 2.3-4.3 2.4-4.4-1.3-2-3.4-2.2-4.1-2.2-1.8-.2-3.4 1-4.3 1-.8 0-2.2-1-3.7-.9-1.9 0-3.6 1.1-4.6 2.8-2 3.5-.5 8.7 1.4 11.5.9 1.4 2 2.9 3.5 2.8 1.4-.1 1.9-.9 3.6-.9 1.7 0 2.2.9 3.7.9 1.5 0 2.5-1.4 3.4-2.8 1.1-1.6 1.5-3.2 1.5-3.2s-2.8-1.1-2.8-4.6zM17.3 7.7c.8-.9 1.3-2.2 1.1-3.5-1.1.1-2.4.7-3.2 1.7-.7.8-1.4 2.1-1.2 3.4 1.2.1 2.5-.6 3.3-1.6z" fill="#060d08"/>
           </svg>
-        </div>
-        <div class="store-btn-text">
-          <span class="store-btn-sub">Download on the</span>
-          <span class="store-btn-name">App Store</span>
-        </div>
+        </span>
+        <span class="btn-copy">
+          <small>Download on the</small>
+          <strong>App Store</strong>
+        </span>
       </a>
-
-      <div class="store-divider">or</div>
-
-      <a class="store-btn store-btn-google" href="https://play.google.com/store/apps/details?id=cosy.green.home" target="_blank" rel="noopener">
-        <div class="store-btn-icon">
-          <svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M4.5 2.3a2 2 0 0 0-.5 1.4v22.6a2 2 0 0 0 .5 1.4l.1.1 12.7-12.7v-.3L4.6 2.2l-.1.1z" fill="#6dde7a"/>
-            <path d="M21.5 19.4l-4.2-4.2v-.4l4.2-4.2.1.1 5 2.8c1.4.8 1.4 2.1 0 2.9l-5 2.9-.1.1z" fill="#c8a84b"/>
-            <path d="M21.6 19.3L17.3 15 4.5 27.7c.5.5 1.2.5 2 .1l15.1-8.5" fill="#f0ede6" fill-opacity=".9"/>
-            <path d="M21.6 10.7L6.5 2.2c-.8-.5-1.5-.4-2 .1L17.3 15l4.3-4.3z" fill="#f0ede6" fill-opacity=".6"/>
+      <span class="or-divider">or</span>
+      <a class="store-btn google-btn" href="https://play.google.com/store/apps/details?id=cosy.green.home" target="_blank" rel="noopener">
+        <span class="btn-icon">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+            <path d="M4 2.1a1.9 1.9 0 0 0-.5 1.3v21.2a1.9 1.9 0 0 0 .5 1.3l.1.1 11.9-11.9v-.3L4 2l-.1.1z" fill="#5ddb74"/>
+            <path d="M19.8 18l-3.9-3.9v-.4l3.9-3.9.1.1 4.7 2.7c1.3.8 1.3 2 0 2.7L19.8 18z" fill="#d4a843"/>
+            <path d="M19.9 17.9L15.9 14 4 26c.4.4 1.1.5 1.9.1L19.9 18z" fill="rgba(237,234,226,.9)"/>
+            <path d="M19.9 10.1L5.9 2c-.8-.5-1.4-.4-1.9.1L15.9 14l4-3.9z" fill="rgba(237,234,226,.6)"/>
           </svg>
-        </div>
-        <div class="store-btn-text">
-          <span class="store-btn-sub">Get it on</span>
-          <span class="store-btn-name">Google Play</span>
-        </div>
+        </span>
+        <span class="btn-copy">
+          <small>Get it on</small>
+          <strong>Google Play</strong>
+        </span>
       </a>
     </div>
-    <div class="store-rating reveal reveal-delay-4">
-      <div class="rating-item">
-        <div class="rating-stars">★★★★★</div>
-        <div class="rating-label">App Store</div>
-      </div>
-      <div class="rating-item">
-        <div class="rating-stars">★★★★★</div>
-        <div class="rating-label">Google Play</div>
-      </div>
-      <div class="rating-item">
-        <div class="rating-stars">🔒 Free</div>
-        <div class="rating-label">No subscription</div>
-      </div>
+    <div class="dl-trust r r4">
+      <div class="trust-item"><div class="trust-stars">★★★★★</div><div class="trust-label">App Store</div></div>
+      <div class="trust-item"><div class="trust-stars">★★★★★</div><div class="trust-label">Google Play</div></div>
+      <div class="trust-item"><div class="trust-stars">🔒 Free</div><div class="trust-label">No subscription</div></div>
     </div>
   </div>
 </section>
 
+<!-- ═══ FOOTER ═══ -->
 <footer>
-  <a class="footer-brand" href="#">
-    <img class="footer-brand-img" src="icon.png" alt="cosy.green logo">
-    <span class="footer-brand-name">cosy<span>.home</span></span>
+  <a class="foot-brand" href="#">
+    <img class="foot-logo" src="icon.png" alt="cosy.green">
+    <span class="foot-name">cosy<b>.home</b></span>
   </a>
-  <div class="footer-center">Part of <a href="https://cosy.green" target="_blank">cosy.green GmbH</a> · Smart heating for sustainable living</div>
-  <div class="footer-right">© 2025 cosy.green GmbH</div>
+  <div class="foot-mid">
+    Part of <a href="https://cosy.green" target="_blank">cosy.green GmbH</a> · Smart heating for sustainable living
+  </div>
+  <div class="foot-copy">© 2025 cosy.green GmbH</div>
 </footer>
 
 <script>
-  // Scroll reveal
-  const obs = new IntersectionObserver((entries) => {
-    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); obs.unobserve(e.target); } });
-  }, { threshold: 0.1 });
-  document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+// ── scroll reveal ──
+const ro = new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');ro.unobserve(e.target)}})
+},{threshold:0.08});
+document.querySelectorAll('.r').forEach(el=>ro.observe(el));
 
-  // Phone slideshow
-  const slides = document.querySelectorAll('.phone-slide');
-  const dots   = document.querySelectorAll('.slide-dot');
-  let current  = 0;
-  let timer;
+// ── phone slideshow ──
+const slides = document.querySelectorAll('.phone-slide');
+const dots   = document.querySelectorAll('.slide-dot');
+let cur=0, timer;
 
-  function goToSlide(n) {
-    slides[current].classList.remove('active');
-    dots[current].classList.remove('active');
-    current = (n + slides.length) % slides.length;
-    slides[current].classList.add('active');
-    dots[current].classList.add('active');
-    resetTimer();
-  }
+function goToSlide(n){
+  slides[cur].classList.remove('active');
+  dots[cur].classList.remove('active');
+  cur=(n+slides.length)%slides.length;
+  slides[cur].classList.add('active');
+  dots[cur].classList.add('active');
+  clearInterval(timer);
+  timer=setInterval(()=>goToSlide(cur+1),3400);
+}
+timer=setInterval(()=>goToSlide(cur+1),3400);
 
-  function nextSlide() { goToSlide(current + 1); }
-
-  function resetTimer() {
-    clearInterval(timer);
-    timer = setInterval(nextSlide, 3200);
-  }
-
-  resetTimer();
+// ── nav scroll tint ──
+window.addEventListener('scroll',()=>{
+  document.querySelector('nav').style.background=
+    window.scrollY>50?'rgba(6,13,8,0.92)':'rgba(6,13,8,0.6)';
+});
 </script>
 </body>
 </html>
